@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 
 DOMAIN=$(yq .dns.domain .config/demo-values.yaml)
-GODADDY_API_KEY=$(yq .dns.godaddyApiKey .config/demo-values.yaml)
-GODADDY_API_SECRET=$(yq .dns.godaddyApiSecret .config/demo-values.yaml)
+AWS_ZONE_ID=$(yq .dns.awsRoute53HostedZoneID .config/demo-values.yaml)
 
 #create-ingress-rule
 create-ingress-rule() {
@@ -53,20 +52,23 @@ update-dns-record()
     if [ "$cloudProvider" == "eks" ]
     then
         record_data=$(kubectl get svc $ingress_service_name --namespace $ingress_namespace -o=jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-        scripts/dektecho.sh status "updating this CNAME record in GoDaddy:  *.$subDomain.$DOMAIN --> $record_data"
-        curl -s -X PUT \
-        -H "Authorization: sso-key $GODADDY_API_KEY:$GODADDY_API_SECRET" "https://api.godaddy.com/v1/domains/$DOMAIN/records/CNAME/*.$subDomain" \
-        -H "Content-Type: application/json" \
-        -d "[{\"data\": \"${record_data}\"}]"
-    else
-        record_data=$(kubectl get svc $ingress_service_name --namespace $ingress_namespace -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
-        scripts/dektecho.sh status "updating this A record in GoDaddy:  *.$subDomain.$DOMAIN --> $record_data"
-        curl -s -X PUT \
-        -H "Authorization: sso-key $GODADDY_API_KEY:$GODADDY_API_SECRET" "https://api.godaddy.com/v1/domains/$DOMAIN/records/A/*.$subDomain" \
-        -H "Content-Type: application/json" \
-        -d "[{\"data\": \"${record_data}\"}]"
-    fi
+        scripts/dektecho.sh status "updating this CNAME record in Route53:  *.$subDomain.$DOMAIN --> $record_data"
+        cat > /tmp/route53upsert.tmp <<EOF
+{
+    "Comment": "CREATE/DELETE/UPSERT a record ",
+    "Changes": [{
+    "Action": "UPSERT",
+                "ResourceRecordSet": {
+                            "Name": "*.$subDomain.$DOMAIN",
+                            "Type": "CNAME",
+                            "TTL": 300,
+                          "ResourceRecords": [{ "Value": "$record_data"}]
+}}]
+}
+EOF
+        aws route53 change-resource-record-sets --hosted-zone-id $AWS_ZONE_ID --change-batch file:///tmp/route53upsert.tmp
     
+    fi    
 }
 
 subDomain=$2

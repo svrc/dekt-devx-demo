@@ -5,6 +5,6 @@ metadata:
 spec:
   git:
     interval: 10s
-    url: https://github.com/dektlong/api-microservice-boot
+    url: https://github.com/svrc/api-microservice-boot
     ref:
       branch: main

@@ -112,7 +112,7 @@
 
         scripts/dektecho.sh cmd "tanzu apps workload create $DEV_WORKLOAD -f workload.yaml -n $DEV_NAMESPACE"
         tanzu apps workload create $DEV_WORKLOAD \
-            --git-repo https://github.com/dektlong/mood-sensors \
+            --git-repo https://github.com/svrc/mood-sensors \
             --git-branch main \
             --type dekt-api \
             --label apps.tanzu.vmware.com/has-tests="true" \

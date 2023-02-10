@@ -10,4 +10,4 @@ metadata:
   annotations:
     'backstage.io/techdocs-ref': dir:.
 spec:
-  owner: dekt-platform-ops
+  owner: svrc-platform-ops

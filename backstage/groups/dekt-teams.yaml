@@ -1,13 +1,13 @@
 apiVersion: backstage.io/v1alpha1
 kind: Group
 metadata:
-  name: dekt-dev-team1
+  name: svrc-dev-team1
   description: Developement team1
 spec:
   type: team
   profile:
-    displayName: dekt-dev-team1
-    email: dekel@vmware.com
+    displayName: svrc-dev-team1
+    email: scharlton@vmware.com
     picture: https://avatars.dicebear.com/api/identicon/team-a@example.com.svg?background=%23fff&margin=25
   parent: default-org
   children: []
@@ -15,13 +15,13 @@ spec:
 apiVersion: backstage.io/v1alpha1
 kind: Group
 metadata:
-  name: dekt-dev-team2
+  name: svrc-dev-team2
   description: Developement team2
 spec:
   type: team
   profile:
-    displayName: dekt-dev-team2
-    email: dekel@vmware.com
+    displayName: svrc-dev-team2
+    email: scharlton@vmware.com
     picture: https://avatars.dicebear.com/api/identicon/team-a@example.com.svg?background=%23fff&margin=25
   parent: default-org
   children: []
@@ -29,13 +29,13 @@ spec:
 apiVersion: backstage.io/v1alpha1
 kind: Group
 metadata:
-  name: dekt-app-ops
+  name: svrc-app-ops
   description: Applications operation team
 spec:
   type: team
   profile:
     displayName: Applications operation team
-    email: dekel@vmware.com
+    email: scharlton@vmware.com
     picture: https://avatars.dicebear.com/api/identicon/team-a@example.com.svg?background=%23fff&margin=25
   parent: default-org
   children: []
@@ -43,13 +43,13 @@ spec:
 apiVersion: backstage.io/v1alpha1
 kind: Group
 metadata:
-  name: dekt-platform-ops
+  name: svrc-platform-ops
   description: Platform operation team
 spec:
   type: team
   profile:
     displayName: Platform operation team
-    email: dekel@vmware.com
+    email: scharlton@vmware.com
     picture: https://avatars.dicebear.com/api/identicon/team-a@example.com.svg?background=%23fff&margin=25
   parent: default-org
   children: []

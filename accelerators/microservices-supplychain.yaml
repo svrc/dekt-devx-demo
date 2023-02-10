@@ -4,6 +4,6 @@ metadata:
   name: microservices-supplychain
 spec:
   git:
-    url: https://github.com/dektlong/microservices-supplychain
+    url: https://github.com/svrc/microservices-supplychain
     ref:
       branch: main

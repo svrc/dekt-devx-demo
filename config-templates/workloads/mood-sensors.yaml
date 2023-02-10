@@ -11,7 +11,7 @@ spec:
   #source code
   source:
     git:
-      url: https://github.com/dektlong/mood-sensors
+      url: https://github.com/svrc/mood-sensors
       ref:
         branch: main
   #data services
@@ -33,7 +33,7 @@ spec:
         type: openapi
         location:
           path: /api-docs
-        owner: dekt-dev-team2
+        owner: svrc-dev-team2
         system: devx-mood
         description: A set of API endpoints to manage the resources within the my-web-backend app.
     - name: annotations

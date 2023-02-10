@@ -462,7 +462,7 @@
         attach-tmc-cluster $DEV_CLUSTER_NAME
         attach-tmc-cluster $STAGE_CLUSTER_NAME
         attach-tmc-cluster $PROD_CLUSTER_NAME
-        attach-tmc-cluster $BROWNFIELD_CLUSTER_NAME
+       # attach-tmc-cluster $BROWNFIELD_CLUSTER_NAME
 
     }
     #attach TMC cluster
@@ -490,7 +490,7 @@
         tmc cluster delete $DEV_CLUSTER_NAME -f -m attached -p attached
         tmc cluster delete $STAGE_CLUSTER_NAME -f -m attached -p attached
         tmc cluster delete $PROD_CLUSTER_NAME -f -m attached -p attached
-        tmc cluster delete $BROWNFIELD_CLUSTER_NAME -f -m attached -p attached
+      #  tmc cluster delete $BROWNFIELD_CLUSTER_NAME -f -m attached -p attached
     }
 
     
@@ -525,23 +525,23 @@ create-clusters)
     scripts/k8s-handler.sh create $VIEW_CLUSTER_PROVIDER $VIEW_CLUSTER_NAME $VIEW_CLUSTER_NODES \
     & scripts/k8s-handler.sh create $DEV_CLUSTER_PROVIDER $DEV_CLUSTER_NAME $DEV_CLUSTER_NODES \
     & scripts/k8s-handler.sh create $STAGE_CLUSTER_PROVIDER $STAGE_CLUSTER_NAME $STAGE_CLUSTER_NODES \
-    & scripts/k8s-handler.sh create $PROD_CLUSTER_PROVIDER $PROD_CLUSTER_NAME $PROD_CLUSTER_NODES \
-    & scripts/k8s-handler.sh create $BROWNFIELD_CLUSTER_PROVIDER $BROWNFIELD_CLUSTER_NAME $BROWNFIELD_CLUSTER_NODES  
+    & scripts/k8s-handler.sh create $PROD_CLUSTER_PROVIDER $PROD_CLUSTER_NAME $PROD_CLUSTER_NODES  
+   # & scripts/k8s-handler.sh create $BROWNFIELD_CLUSTER_PROVIDER $BROWNFIELD_CLUSTER_NAME $BROWNFIELD_CLUSTER_NODES  
     ;;
 install-demo)
     #set k8s contexts and verify cluster install
-    scripts/k8s-handler.sh init $VIEW_CLUSTER_PROVIDER $VIEW_CLUSTER_NAME
-    scripts/k8s-handler.sh init $DEV_CLUSTER_PROVIDER $DEV_CLUSTER_NAME
-    scripts/k8s-handler.sh init $STAGE_CLUSTER_PROVIDER $STAGE_CLUSTER_NAME
-    scripts/k8s-handler.sh init $PROD_CLUSTER_PROVIDER $PROD_CLUSTER_NAME
-    scripts/k8s-handler.sh init $BROWNFIELD_CLUSTER_PROVIDER $BROWNFIELD_CLUSTER_NAME
-    #install all demo components
-    install-view-cluster
-    install-dev-cluster
-    install-stage-cluster
-    install-prod-cluster
-    update-multi-cluster-access
-    add-brownfield-apis
+#    scripts/k8s-handler.sh init $VIEW_CLUSTER_PROVIDER $VIEW_CLUSTER_NAME
+#    scripts/k8s-handler.sh init $DEV_CLUSTER_PROVIDER $DEV_CLUSTER_NAME
+#    scripts/k8s-handler.sh init $STAGE_CLUSTER_PROVIDER $STAGE_CLUSTER_NAME
+#    scripts/k8s-handler.sh init $PROD_CLUSTER_PROVIDER $PROD_CLUSTER_NAME
+#    #scripts/k8s-handler.sh init $BROWNFIELD_CLUSTER_PROVIDER $BROWNFIELD_CLUSTER_NAME
+#    #install all demo components
+#    install-view-cluster
+#    install-dev-cluster
+#    install-stage-cluster
+#    install-prod-cluster
+#    update-multi-cluster-access
+#    #add-brownfield-apis
     attach-tmc-clusters 
     ;;
 delete-all)
@@ -551,8 +551,8 @@ delete-all)
     scripts/k8s-handler.sh delete $VIEW_CLUSTER_PROVIDER $VIEW_CLUSTER_NAME \
     & scripts/k8s-handler.sh delete $DEV_CLUSTER_PROVIDER $DEV_CLUSTER_NAME \
     & scripts/k8s-handler.sh delete $STAGE_CLUSTER_PROVIDER $STAGE_CLUSTER_NAME \
-    & scripts/k8s-handler.sh delete $PROD_CLUSTER_PROVIDER $PROD_CLUSTER_NAME \
-    & scripts/k8s-handler.sh delete $BROWNFIELD_CLUSTER_PROVIDER $BROWNFIELD_CLUSTER_NAME
+    & scripts/k8s-handler.sh delete $PROD_CLUSTER_PROVIDER $PROD_CLUSTER_NAME 
+  #  & scripts/k8s-handler.sh delete $BROWNFIELD_CLUSTER_PROVIDER $BROWNFIELD_CLUSTER_NAME
     ;;
 generate-configs)
     scripts/tanzu-handler.sh generate-configs
