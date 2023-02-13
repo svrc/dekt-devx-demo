@@ -61,7 +61,7 @@ create-eks-cluster () {
 		--region $AWS_REGION \
 		--instance-types $AWS_INSTANCE_TYPE \
 		--version 1.23 \
-        --with-oidc \
+                --with-oidc \
 		-N $number_of_nodes
 
 	eksctl create iamserviceaccount \
@@ -78,6 +78,206 @@ create-eks-cluster () {
 		--cluster $cluster_name \
 		--service-account-role-arn arn:aws:iam::$AWS_ACCOUNT_ID:role/AmazonEKS_EBS_CSI_DriverRole-$cluster_name \
 		--force
+
+OIDCPROVIDER=$(aws eks describe-cluster --name $cluster_name --region $AWS_REGION --output json | jq '.cluster.identity.oidc.issuer' | tr -d '"' | sed 's/https:\/\///')
+cat << EOF > /tmp/${cluster_name}-build-service-trust-policy.json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "Federated": "arn:aws:iam::${AWS_ACCOUNT_ID}:oidc-provider/${OIDCPROVIDER}"
+            },
+            "Action": "sts:AssumeRoleWithWebIdentity",
+            "Condition": {
+                "StringEquals": {
+                    "${OIDCPROVIDER}:aud": "sts.amazonaws.com"
+                },
+                "StringLike": {
+                    "${OIDCPROVIDER}:sub": [
+                        "system:serviceaccount:kpack:controller",
+                        "system:serviceaccount:build-service:dependency-updater-controller-serviceaccount"
+                    ]
+                }
+            }
+        }
+    ]
+}
+EOF
+
+
+cat << EOF > /tmp/${cluster_name}-workload-trust-policy.json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "Federated": "arn:aws:iam::${AWS_ACCOUNT_ID}:oidc-provider/${OIDCPROVIDER}"
+            },
+            "Action": "sts:AssumeRoleWithWebIdentity",
+            "Condition": {
+                "StringEquals": {
+                    "${OIDCPROVIDER}:sub": [ "system:serviceaccount:dev:default","system:serviceaccount:team:default","system:serviceaccount:application:default"],
+                    "${OIDCPROVIDER}:aud": "sts.amazonaws.com"
+                }
+            }
+        }
+    ]
+}
+EOF
+
+cat << EOF > /tmp/${cluster_name}-build-service-policy.json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": [
+                "ecr:DescribeRegistry",
+                "ecr:GetAuthorizationToken",
+                "ecr:GetRegistryPolicy",
+                "ecr:PutRegistryPolicy",
+                "ecr:PutReplicationConfiguration",
+                "ecr:DeleteRegistryPolicy"
+            ],
+            "Resource": "*",
+            "Effect": "Allow",
+            "Sid": "TAPEcrBuildServiceGlobal"
+        },
+        {
+            "Action": [
+                "ecr:DescribeImages",
+                "ecr:ListImages",
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:BatchGetRepositoryScanningConfiguration",
+                "ecr:DescribeImageReplicationStatus",
+                "ecr:DescribeImageScanFindings",
+                "ecr:DescribeRepositories",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:GetLifecyclePolicy",
+                "ecr:GetLifecyclePolicyPreview",
+                "ecr:GetRegistryScanningConfiguration",
+                "ecr:GetRepositoryPolicy",
+                "ecr:ListTagsForResource",
+                "ecr:TagResource",
+                "ecr:UntagResource",
+                "ecr:BatchDeleteImage",
+                "ecr:BatchImportUpstreamImage",
+                "ecr:CompleteLayerUpload",
+                "ecr:CreatePullThroughCacheRule",
+                "ecr:CreateRepository",
+                "ecr:DeleteLifecyclePolicy",
+                "ecr:DeletePullThroughCacheRule",
+                "ecr:DeleteRepository",
+                "ecr:InitiateLayerUpload",
+                "ecr:PutImage",
+                "ecr:PutImageScanningConfiguration",
+                "ecr:PutImageTagMutability",
+                "ecr:PutLifecyclePolicy",
+                "ecr:PutRegistryScanningConfiguration",
+                "ecr:ReplicateImage",
+                "ecr:StartImageScan",
+                "ecr:StartLifecyclePolicyPreview",
+                "ecr:UploadLayerPart",
+                "ecr:DeleteRepositoryPolicy",
+                "ecr:SetRepositoryPolicy"
+            ],
+            "Resource": [
+                "arn:aws:ecr:${AWS_REGION}:${AWS_ACCOUNT_ID}:repository/tap-build-service",
+                "arn:aws:ecr:${AWS_REGION}:${AWS_ACCOUNT_ID}:repository/tap-images/tap-packages"
+            ],
+            "Effect": "Allow",
+            "Sid": "TAPEcrBuildServiceScoped"
+        }
+    ]
+}
+EOF
+
+cat << EOF > /tmp/${cluster_name}-workload-policy.json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": [
+                "ecr:DescribeRegistry",
+                "ecr:GetAuthorizationToken",
+                "ecr:GetRegistryPolicy",
+                "ecr:PutRegistryPolicy",
+                "ecr:PutReplicationConfiguration",
+                "ecr:DeleteRegistryPolicy"
+            ],
+            "Resource": "*",
+            "Effect": "Allow",
+            "Sid": "TAPEcrWorkloadGlobal"
+        },
+        {
+            "Action": [
+                "ecr:DescribeImages",
+                "ecr:ListImages",
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:BatchGetRepositoryScanningConfiguration",
+                "ecr:DescribeImageReplicationStatus",
+                "ecr:DescribeImageScanFindings",
+                "ecr:DescribeRepositories",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:GetLifecyclePolicy",
+                "ecr:GetLifecyclePolicyPreview",
+                "ecr:GetRegistryScanningConfiguration",
+                "ecr:GetRepositoryPolicy",
+                "ecr:ListTagsForResource",
+                "ecr:TagResource",
+                "ecr:UntagResource",
+                "ecr:BatchDeleteImage",
+                "ecr:BatchImportUpstreamImage",
+                "ecr:CompleteLayerUpload",
+                "ecr:CreatePullThroughCacheRule",
+                "ecr:CreateRepository",
+                "ecr:DeleteLifecyclePolicy",
+                "ecr:DeletePullThroughCacheRule",
+                "ecr:DeleteRepository",
+                "ecr:InitiateLayerUpload",
+                "ecr:PutImage",
+                "ecr:PutImageScanningConfiguration",
+                "ecr:PutImageTagMutability",
+                "ecr:PutLifecyclePolicy",
+                "ecr:PutRegistryScanningConfiguration",
+                "ecr:ReplicateImage",
+                "ecr:StartImageScan",
+                "ecr:StartLifecyclePolicyPreview",
+                "ecr:UploadLayerPart",
+                "ecr:DeleteRepositoryPolicy",
+                "ecr:SetRepositoryPolicy"
+            ],
+            "Resource": [
+                "arn:aws:ecr:${AWS_REGION}:${AWS_ACCOUNT_ID}:repository/tap-build-service",
+                "arn:aws:ecr:${AWS_REGION}:${AWS_ACCOUNT_ID}:repository/tap-apps",
+                "arn:aws:ecr:${AWS_REGION}:${AWS_ACCOUNT_ID}:repository/tap-apps/*"
+            ],
+            "Effect": "Allow",
+            "Sid": "TAPEcrWorkloadScoped"
+        }
+    ]
+}
+EOF
+# Create the Tanzu Build Service Role
+aws iam create-role --role-name ${cluster_name}-build-service --assume-role-policy-document file:///tmp/${cluster_name}-build-service-trust-policy.json
+# Create the Workload Role
+aws iam create-role --role-name ${cluster_name}-workload --assume-role-policy-document file:///tmp/${cluster_name}-workload-trust-policy.json
+# Attach the Policy to the Build Role
+aws iam put-role-policy --role-name ${cluster_name}-build-service --policy-name tapBuildServicePolicy --policy-document file:///tmp/${cluster_name}-build-service-policy.json
+
+# Attach the Policy to the Workload Role
+aws iam put-role-policy --role-name ${cluster_name}-workload --policy-name tapWorkload --policy-document file:///tmp/${cluster_name}-workload-policy.json
+}
+
+create-ecr-registry() {
+
+  aws ecr create-repository --repository-name tap-images --region $AWS_REGION
+  aws ecr create-repository --repository-name tap-build-service --region $AWS_REGION
+  aws ecr create-repository --repository-name tap-apps --region $AWS_REGION
 
 }
 
@@ -190,6 +390,7 @@ clusterProvider=$2
 clusterName=$3
 numOfNodes=$4
 case $operation in
+
 create)
 	case $clusterProvider in
 	aks)

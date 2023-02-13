@@ -7,3 +7,5 @@
 # ignore carvel bundle
 scripts/carvel
 
+gitops-dev/
+gitops-stage/

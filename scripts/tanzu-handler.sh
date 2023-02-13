@@ -16,13 +16,15 @@ GW_INSTALL_DIR=$(yq .brownfield_apis.scgwInstallDirectory .config/demo-values.ya
 relocate-tap-images() {
 
     scripts/dektecho.sh status "relocating TAP $TAP_VERSION images to $IMGPKG_REGISTRY_HOSTNAME/$SYSTEM_REPO/tap-packages"
-
     imgpkg copy \
         --bundle $TANZU_NETWORK_REGISTRY/tanzu-application-platform/tap-packages:$TAP_VERSION \
         --to-tar .config/tap-packages-$TAP_VERSION.tar \
         --include-non-distributable-layers
 
-    imgpkg copy \
+
+    IMGPKG_USERNAME=$IMGPKG_REGISTRY_USERNAME
+    IMGPKG_PASSWORD=$IMGPKG_REGISTRY_PASSWORD
+    imgpkg copy --concurrency 1  \
         --tar .config/tap-packages-$TAP_VERSION.tar \
         --to-repo $IMGPKG_REGISTRY_HOSTNAME/$SYSTEM_REPO/tap-packages \
         --include-non-distributable-layers
@@ -41,6 +43,8 @@ relocate-carvel-bundle() {
         --to-tar .config/carvel-bundle.tar \
         --include-non-distributable-layers
 
+    IMGPKG_USERNAME=$IMGPKG_REGISTRY_USERNAME
+    IMGPKG_PASSWORD=$IMGPKG_REGISTRY_PASSWORD
     imgpkg copy \
         --tar .config/carvel-bundle.tar \
         --to-repo $IMGPKG_REGISTRY_HOSTNAME/$SYSTEM_REPO/cluster-essentials-bundle \
@@ -62,6 +66,8 @@ relocate-tbs-images() {
         --bundle $TANZU_NETWORK_REGISTRY/tanzu-application-platform/full-tbs-deps-package-repo:$tbs_version \
         --to-tar=.config/tbs-full-deps.tar
     
+    IMGPKG_USERNAME=$IMGPKG_REGISTRY_USERNAME
+    IMGPKG_PASSWORD=$IMGPKG_REGISTRY_PASSWORD
     imgpkg copy \
         --tar .config/tbs-full-deps.tar \
         --to-repo=$IMGPKG_REGISTRY_HOSTNAME/$SYSTEM_REPO/tbs-full-deps
@@ -83,7 +89,9 @@ relocate-tds-images() {
 
     scripts/dektecho.sh status "relocating Tanzu Data Services $TDS_VERSION to $IMGPKG_REGISTRY_HOSTNAME/$SYSTEM_REPO/tds-packages"
         
-    imgpkg copy \
+    IMGPKG_USERNAME=$IMGPKG_REGISTRY_USERNAME
+    IMGPKG_PASSWORD=$IMGPKG_REGISTRY_PASSWORD
+    imgpkg copy --concurrency 1  \
         --bundle $TANZU_NETWORK_REGISTRY/packages-for-vmware-tanzu-data-services/tds-packages:$TDS_VERSION \
         --to-repo $IMGPKG_REGISTRY_HOSTNAME/$SYSTEM_REPO/tds-packages
 }
@@ -102,6 +110,23 @@ add-carvel () {
 
     pushd
 }
+
+#remove-carvel
+remove-carvel () {
+
+    scripts/dektecho.sh status "remove Carvel tools to cluster $(kubectl config current-context)"
+
+    pushd scripts/carvel
+
+    INSTALL_BUNDLE=$IMGPKG_REGISTRY_HOSTNAME/$SYSTEM_REPO/cluster-essentials-bundle@$CARVEL_BUNDLE \
+    INSTALL_REGISTRY_HOSTNAME=$IMGPKG_REGISTRY_HOSTNAME \
+    INSTALL_REGISTRY_USERNAME=$IMGPKG_REGISTRY_USERNAME \
+    INSTALL_REGISTRY_PASSWORD=$IMGPKG_REGISTRY_PASSWORD \
+    ./uninstall.sh --yes
+
+    pushd
+}
+
 
 
 #generate-config-yamls
@@ -137,6 +162,9 @@ generate-config-yamls() {
     #cluster-configs
     mkdir -p .config/cluster-configs
     cp -a config-templates/cluster-configs/ .config/cluster-configs/
+    ytt -f config-templates/cluster-configs/single-user-access.yaml -v cluster_type=dev --data-values-file=.config/demo-values.yaml > .config/cluster-configs/single-user-access-dev.yaml
+    ytt -f config-templates/cluster-configs/single-user-access.yaml -v cluster_type=stage --data-values-file=.config/demo-values.yaml > .config/cluster-configs/single-user-access-stage.yaml
+    ytt -f config-templates/cluster-configs/single-user-access.yaml -v cluster_type=prod --data-values-file=.config/demo-values.yaml > .config/cluster-configs/single-user-access-prod.yaml
     
     #data-services (WIP)
     cp -R config-templates/data-services .config
@@ -156,6 +184,7 @@ incorrect-usage() {
     echo "  relocate-tanzu-images tap|tbs|tds|scgw"
     echo 
     echo "  add-carvel-tools"
+    echo "  remove-carvel-tools"
     echo 
     echo "  generate-configs"
     echo
@@ -163,7 +192,7 @@ incorrect-usage() {
 
 case $1 in
 relocate-tanzu-images)
-    docker login $IMGPKG_REGISTRY_HOSTNAME -u $IMGPKG_REGISTRY_USERNAME -p $IMGPKG_REGISTRY_PASSWORD
+    aws ecr get-login-password --region us-west-1 | docker login $IMGPKG_REGISTRY_HOSTNAME -u AWS --password-stdin
     docker login registry.tanzu.vmware.com -u $TANZU_NETWORK_USER -p $TANZU_NETWORK_PASSWORD
     case $2 in
     tap)
@@ -187,6 +216,9 @@ relocate-tanzu-images)
     ;;
 add-carvel-tools)
   	add-carvel
+    ;;
+remove-carvel-tools)
+  	remove-carvel
     ;;
 generate-configs)
     generate-config-yamls

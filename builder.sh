@@ -59,7 +59,7 @@
 
         scripts/tanzu-handler.sh add-carvel-tools
         
-        install-tap "tap-view.yaml"
+        install-tap "tap-view.yaml" 
 
         scripts/dektecho.sh status "Adding custom accelerators"
         kubectl apply -f accelerators -n accelerator-system
@@ -72,6 +72,17 @@
         
     }
 
+    uninstall-view-cluster() {
+        scripts/dektecho.sh info "deleting  demo components for $VIEW_CLUSTER_NAME cluster"
+
+        kubectl config use-context $VIEW_CLUSTER_NAME
+
+        kubectl delete -f .config/cluster-configs/cluster-issuer.yaml
+        kubectl delete -f accelerators -n accelerator-system
+        uninstall-tap
+        scripts/tanzu-handler.sh remove-carvel-tools
+    }
+
     #install-dev-cluster
     install-dev-cluster() {
 
@@ -81,10 +92,10 @@
 
         scripts/tanzu-handler.sh add-carvel-tools
 
-        add-app-rbac $DEV_NAMESPACE
-        add-app-rbac $TEAM_NAMESPACE
+        add-app-rbac $DEV_NAMESPACE dev
+        add-app-rbac $TEAM_NAMESPACE dev
 
-        install-tap "tap-iterate.yaml"
+        install-tap "tap-iterate.yaml" 
 
         scripts/dektecho.sh status "Adding custom supply chains"
         kubectl apply -f .config/supply-chains/dekt-src-config.yaml
@@ -99,6 +110,19 @@
         kubectl apply -f .config/cluster-configs/cluster-issuer.yaml
         
     }
+    uninstall-dev-cluster() {
+        scripts/dektecho.sh info "deleting  demo components for $DEV_CLUSTER_NAME cluster"
+
+        kubectl config use-context $DEV_CLUSTER_NAME
+
+        kubectl delete -f .config/cluster-configs/cluster-issuer.yaml
+        kubectl delete -f .config/supply-chains/dekt-src-config.yaml
+        kubectl delete -f .config/supply-chains/dekt-src-test-api-config.yaml
+        kubectl delete -f .config/supply-chains/tekton-pipeline.yaml -n $DEV_NAMESPACE
+        kubectl delete -f .config/supply-chains/tekton-pipeline.yaml -n $TEAM_NAMESPACE
+        uninstall-tap
+        scripts/tanzu-handler.sh remove-carvel-tools
+    }
 
     #install-stage-cluster
     install-stage-cluster() {
@@ -109,11 +133,11 @@
 
         scripts/tanzu-handler.sh add-carvel-tools
     
-        add-app-rbac $STAGEPROD_NAMESPACE
+        add-app-rbac $STAGEPROD_NAMESPACE stage
 
         add-metadata-store-secrets
 
-        install-tap "tap-build.yaml"
+        install-tap "tap-build.yaml" 
 
         install-snyk
 
@@ -129,7 +153,20 @@
 
         kubectl apply -f .config/cluster-configs/cluster-issuer.yaml
     }
-    
+    uninstall-stage-cluster() {
+        scripts/dektecho.sh info "deleting  demo components for $STAGE_CLUSTER_NAME cluster"
+
+        kubectl config use-context $STAGE_CLUSTER_NAME
+
+        kubectl delete -f .config/cluster-configs/cluster-issuer.yaml
+        kubectl delete -f .config/supply-chains/dekt-src-scan-config.yaml
+        kubectl delete -f .config/supply-chains/dekt-src-test-scan-api-config.yaml
+        kubectl delete -f .config/supply-chains/tekton-pipeline.yaml -n $STAGEPROD_NAMESPACE
+        kubectl delete -f .config/scanners/scan-policy.yaml -n $STAGEPROD_NAMESPACE #for all scanners
+        uninstall-tap
+        scripts/tanzu-handler.sh remove-carvel-tools
+    }
+ 
     #install-prod-cluster
     install-prod-cluster() {
 
@@ -139,9 +176,9 @@
 
         scripts/tanzu-handler.sh add-carvel-tools
         
-        add-app-rbac $STAGEPROD_NAMESPACE
+        add-app-rbac $STAGEPROD_NAMESPACE prod
         
-        install-tap "tap-run.yaml"
+        install-tap "tap-run.yaml" 
 
         add-data-services "prod"
 
@@ -149,7 +186,15 @@
 
         kubectl apply -f .config/cluster-configs/cluster-issuer.yaml
     }
+    uninstall-prod-cluster() {
+        scripts/dektecho.sh info "deleting  demo components for $PROD_CLUSTER_NAME cluster"
 
+        kubectl config use-context $PROD_CLUSTER_NAME
+
+        kubectl delete -f .config/cluster-configs/cluster-issuer.yaml
+        uninstall-tap
+        scripts/tanzu-handler.sh remove-carvel-tools
+    }
     #install-tap
     install-tap() {
 
@@ -159,10 +204,11 @@
 
         kubectl create ns tap-install
 
-        tanzu secret registry add tap-registry \
-            --username ${PRIVATE_REPO_USER} --password ${PRIVATE_REPO_PASSWORD} \
-           --server $PRIVATE_REPO_SERVER \
-           --export-to-all-namespaces --yes --namespace tap-install
+        # commenting out for ecr 
+        #tanzu secret registry add tap-registry \
+        #    --username ${PRIVATE_REPO_USER} --password ${PRIVATE_REPO_PASSWORD} \
+        #   --server $PRIVATE_REPO_SERVER \
+        #   --export-to-all-namespaces --yes --namespace tap-install
 
         tanzu package repository add tanzu-tap-repository \
             --url $PRIVATE_REPO_SERVER/$SYSTEM_REPO/tap-packages:$TAP_VERSION \
@@ -173,23 +219,30 @@
             --namespace tap-install
     }
 
+    uninstall-tap() {
+
+        tanzu package installed delete tap -n tap-install
+
+    }
+
     #add-app-rbac
     add-app-rbac() {
         
         appsNamespace=$1
+        cluster_type=$2
 
         scripts/dektecho.sh status "Setup $appsNamespace namespace on $(kubectl config current-context) cluster"
 
         kubectl create ns $appsNamespace
-        
-        tanzu secret registry add registry-credentials \
-            --server $PRIVATE_REPO_SERVER \
-            --username $PRIVATE_REPO_USER \
-            --password $PRIVATE_REPO_PASSWORD \
-            --namespace $appsNamespace    
+
+       # tanzu secret registry add registry-credentials \
+       #     --server $PRIVATE_REPO_SERVER \
+       #     --username $PRIVATE_REPO_USER \
+       #     --password $PRIVATE_REPO_PASSWORD \
+       #     --namespace $appsNamespace
 
         kubectl apply -f .config/supply-chains/gitops-creds.yaml -n $appsNamespace
-        kubectl apply -f .config/cluster-configs/single-user-access.yaml -n $appsNamespace
+        kubectl apply -f .config/cluster-configs/single-user-access-${cluster_type}.yaml -n $appsNamespace
         #currently not using the namespace provisioner since using customer sc with gitops
         #kubectl label namespaces $appsNamespace apps.tanzu.vmware.com/tap-ns=""
     }
@@ -228,6 +281,7 @@
         esac
 
     }
+
     #install-tanzu-rabbitmq
     install-tanzu-rabbitmq() {
 
@@ -529,25 +583,30 @@ create-clusters)
    # & scripts/k8s-handler.sh create $BROWNFIELD_CLUSTER_PROVIDER $BROWNFIELD_CLUSTER_NAME $BROWNFIELD_CLUSTER_NODES  
     ;;
 install-demo)
-    #set k8s contexts and verify cluster install
-#    scripts/k8s-handler.sh init $VIEW_CLUSTER_PROVIDER $VIEW_CLUSTER_NAME
-#    scripts/k8s-handler.sh init $DEV_CLUSTER_PROVIDER $DEV_CLUSTER_NAME
-#    scripts/k8s-handler.sh init $STAGE_CLUSTER_PROVIDER $STAGE_CLUSTER_NAME
-#    scripts/k8s-handler.sh init $PROD_CLUSTER_PROVIDER $PROD_CLUSTER_NAME
-#    #scripts/k8s-handler.sh init $BROWNFIELD_CLUSTER_PROVIDER $BROWNFIELD_CLUSTER_NAME
-#    #install all demo components
-#    install-view-cluster
-#    install-dev-cluster
-#    install-stage-cluster
-#    install-prod-cluster
-#    update-multi-cluster-access
-#    #add-brownfield-apis
+   #set k8s contexts and verify cluster install
+    scripts/k8s-handler.sh init $VIEW_CLUSTER_PROVIDER $VIEW_CLUSTER_NAME
+    scripts/k8s-handler.sh init $DEV_CLUSTER_PROVIDER $DEV_CLUSTER_NAME
+    scripts/k8s-handler.sh init $STAGE_CLUSTER_PROVIDER $STAGE_CLUSTER_NAME
+    scripts/k8s-handler.sh init $PROD_CLUSTER_PROVIDER $PROD_CLUSTER_NAME
+    #scripts/k8s-handler.sh init $BROWNFIELD_CLUSTER_PROVIDER $BROWNFIELD_CLUSTER_NAME
+   #install all demo components
+    install-view-cluster
+   install-dev-cluster
+    install-stage-cluster
+   install-prod-cluster
+    update-multi-cluster-access
+    #add-brownfield-apis
     attach-tmc-clusters 
     ;;
 delete-all)
     scripts/dektecho.sh prompt  "Are you sure you want to delete all clusters?" && [ $? -eq 0 ] || exit
     ./demo.sh reset
     delete-tmc-clusters
+    uninstall-view-cluster
+   uninstall-dev-cluster
+    uninstall-stage-cluster
+   uninstall-prod-cluster
+
     scripts/k8s-handler.sh delete $VIEW_CLUSTER_PROVIDER $VIEW_CLUSTER_NAME \
     & scripts/k8s-handler.sh delete $DEV_CLUSTER_PROVIDER $DEV_CLUSTER_NAME \
     & scripts/k8s-handler.sh delete $STAGE_CLUSTER_PROVIDER $STAGE_CLUSTER_NAME \

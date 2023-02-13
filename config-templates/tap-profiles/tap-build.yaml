@@ -5,8 +5,6 @@ shared:
   ingress_issuer: #@ data.values.tap.ingressIssuer
   image_registry:
     project_path: #@ "{}/{}".format(data.values.private_registry.host, data.values.repositories.system)
-    username: #@ data.values.private_registry.username
-    password: #@ data.values.private_registry.password
 supply_chain: testing_scanning
 ootb_supply_chain_basic:
   gitops:
@@ -20,6 +18,9 @@ ootb_supply_chain_testing_scanning:
     server_address: #@ data.values.gitops.server
     repository_owner: #@ data.values.gitops.owner
     repository_name: #@ data.values.gitops.stage
+buildservice:
+  kp_default_repository: #@ "{}/{}".format(data.values.private_registry.host, data.values.repositories.build_service)
+  kp_default_repository_aws_iam_role_arn: #@ "{}/{}-{}".format(data.values.private_registry.aws_iam_arn, data.values.clusters.stage.name, "build-service")
 scanning:
   metadataStore:
     url: ""

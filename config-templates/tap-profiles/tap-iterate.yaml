@@ -7,10 +7,12 @@ shared:
   ingress_issuer: #@ data.values.tap.ingressIssuer
   image_registry:
     project_path: #@ "{}/{}".format(data.values.private_registry.host, data.values.repositories.system)
-    username: #@ data.values.private_registry.username
-    password: #@ data.values.private_registry.password
 
 supply_chain: basic
+
+buildservice:
+  kp_default_repository: #@ "{}/{}".format(data.values.private_registry.host, data.values.repositories.build_service)
+  kp_default_repository_aws_iam_role_arn: #@ "{}/{}-{}".format(data.values.private_registry.aws_iam_arn, data.values.clusters.dev.name, "build-service")
 
 ootb_supply_chain_basic: 
   gitops:
