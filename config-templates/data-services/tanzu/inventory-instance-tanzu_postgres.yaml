@@ -7,7 +7,7 @@ spec:
     name: registry-credentials 
   memory: 800Mi
   cpu: "0.8"
-  storageClassName: default
+  storageClassName: gp2
   storageSize: 800M
   serviceType: LoadBalancer
   highAvailability:

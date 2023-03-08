@@ -89,8 +89,8 @@
         
         yq '.spec.env[0].value = env(sniffThreshold)' .config/workloads/mood-portal.yaml -i
         #set subdomain for api calls in mood-portal
-        export sensorsActivateAPI="http://mood-sensors.$subDomain.$DOMAIN/activate"
-        export sensorsMeasureAPI="http://mood-sensors.$subDomain.$DOMAIN/measure"
+        export sensorsActivateAPI="https://mood-sensors.$subDomain.$DOMAIN/activate"
+        export sensorsMeasureAPI="https://mood-sensors.$subDomain.$DOMAIN/measure"
         yq '.spec.env[1].value = env(sensorsActivateAPI)' .config/workloads/mood-portal.yaml -i
         yq '.spec.env[2].value = env(sensorsMeasureAPI)' .config/workloads/mood-portal.yaml -i
 
