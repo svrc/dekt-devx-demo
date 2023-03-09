@@ -95,6 +95,23 @@ metadata:
           - minimum: 1
           - maximum: 10
           - required: false
+          
+        - name: registryHost
+          controlType: singleInput
+          type: string
+          path: ".spec.parameters.registryHost"
+          title: Registry for downloading Tanzu Cluster Essentials
+          description:  The Tanzu Cluster Essentials installer job will use this registry to download/install the image bundle
+          default: "897143170532.dkr.ecr.us-west-1.amazonaws.com"
+                    
+        - name: profile
+          controlType: singleInput
+          type: string
+          path: ".spec.parameters.profile"
+          title: Tanzu App Platform profile to install 
+          description:  Tanzu App Platform profile (only "run" is supported currently)
+          default: "run"
+          
 spec:
   connectionSecretKeys:
   - kubeconfig
@@ -143,6 +160,14 @@ spec:
                     description: The Namespace for Fargate Profile
                     type: string
                     default: default
+                  registryHost:
+                    description: The Hostname for the Tanzu Cluster Essentials registry
+                    type: string
+                    default: "897143170532.dkr.ecr.us-west-1.amazonaws.com"
+                  profile:
+                    description: Tanzu App Platform profile to install (only "run" is supported currently)
+                    type: string
+                    default: "run"
                 required:
                 - version
             required:

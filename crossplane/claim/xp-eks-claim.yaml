@@ -1,0 +1,21 @@
+apiVersion: xp.tanzu.vmware.com/v1alpha1
+kind: ManagedCluster
+metadata:
+  name: stu-testeks3
+  namespace: managed
+  labels:
+    owner: stu
+spec:
+  id: stu-testeks3
+  compositionSelector:
+    matchLabels:
+      cluster: eks
+      provider: native
+  parameters:
+    version: "1.24"
+    fargateNamespace: default
+    nodeSize: small ### Supported values: small, medium, large
+    nodeCount: 3
+    region: use1
+  writeConnectionSecretToRef:
+    name: stu-testeks3
