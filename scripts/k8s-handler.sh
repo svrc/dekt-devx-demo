@@ -55,29 +55,29 @@ create-eks-cluster () {
 
 	scripts/dektecho.sh info "Creating EKS cluster $cluster_name with $number_of_nodes nodes"
 
-	eksctl create cluster \
-		--name $cluster_name \
-		--managed \
-		--region $AWS_REGION \
-		--instance-types $AWS_INSTANCE_TYPE \
-		--version 1.23 \
-                --with-oidc \
-		-N $number_of_nodes
-
-	eksctl create iamserviceaccount \
-  		--name ebs-csi-controller-sa \
-  		--namespace kube-system \
-  		--cluster $cluster_name \
-  		--attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy \
-  		--approve \
-  		--role-only \
-  		--role-name AmazonEKS_EBS_CSI_DriverRole-$cluster_name
-
-	eksctl create addon \
-		--name aws-ebs-csi-driver \
-		--cluster $cluster_name \
-		--service-account-role-arn arn:aws:iam::$AWS_ACCOUNT_ID:role/AmazonEKS_EBS_CSI_DriverRole-$cluster_name \
-		--force
+#	eksctl create cluster \
+#		--name $cluster_name \
+#		--managed \
+#		--region $AWS_REGION \
+#		--instance-types $AWS_INSTANCE_TYPE \
+#		--version 1.23 \
+#                --with-oidc \
+#		-N $number_of_nodes
+#
+#	eksctl create iamserviceaccount \
+#  		--name ebs-csi-controller-sa \
+#  		--namespace kube-system \
+#  		--cluster $cluster_name \
+#  		--attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy \
+#  		--approve \
+#  		--role-only \
+#  		--role-name AmazonEKS_EBS_CSI_DriverRole-$cluster_name
+#
+#	eksctl create addon \
+#		--name aws-ebs-csi-driver \
+#		--cluster $cluster_name \
+#		--service-account-role-arn arn:aws:iam::$AWS_ACCOUNT_ID:role/AmazonEKS_EBS_CSI_DriverRole-$cluster_name \
+#		--force
 
 OIDCPROVIDER=$(aws eks describe-cluster --name $cluster_name --region $AWS_REGION --output json | jq '.cluster.identity.oidc.issuer' | tr -d '"' | sed 's/https:\/\///')
 cat << EOF > /tmp/${cluster_name}-build-service-trust-policy.json
