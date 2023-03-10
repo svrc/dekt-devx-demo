@@ -4,6 +4,7 @@ metadata:
   name: eks-accelerator
 spec:
   git:
+    interval: 20s
     url: https://github.com/svrc/eks-accelerator
     ref:
       branch: main
