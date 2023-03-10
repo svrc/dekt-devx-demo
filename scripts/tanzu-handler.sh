@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 
-export IMGPKG_REGISTRY_HOSTNAME=$(yq .private_registry.host .config/demo-values.yaml)
-export IMGPKG_REGISTRY_USERNAME=$(yq .private_registry.username .config/demo-values.yaml)
-export IMGPKG_REGISTRY_PASSWORD=$(yq .private_registry.password .config/demo-values.yaml)
 SYSTEM_REPO=$(yq .repositories.system .config/demo-values.yaml)
 CARVEL_BUNDLE=$(yq .tap.carvelBundle .config/demo-values.yaml)
 TANZU_NETWORK_REGISTRY="registry.tanzu.vmware.com"
@@ -11,6 +8,10 @@ TANZU_NETWORK_PASSWORD=$(yq .tanzu_network.password .config/demo-values.yaml)
 TAP_VERSION=$(yq .tap.tapVersion .config/demo-values.yaml)
 TDS_VERSION=$(yq .data_services.tdsVersion .config/demo-values.yaml)
 GW_INSTALL_DIR=$(yq .brownfield_apis.scgwInstallDirectory .config/demo-values.yaml)
+AWS_REGION=$(yq .clouds.aws.region .config/demo-values.yaml)
+export IMGPKG_REGISTRY_HOSTNAME=$(yq .private_registry.hostname .config/demo-values.yaml)
+#export IMGPKG_REGISTRY_USERNAME=$(yq .private_registry.username .config/demo-values.yaml)
+#export IMGPKG_REGISTRY_PASSWORD=$(yq .private_registry.password .config/demo-values.yaml)
 
 #relocate-tap-images
 relocate-tap-images() {
@@ -21,9 +22,9 @@ relocate-tap-images() {
         --to-tar .config/tap-packages-$TAP_VERSION.tar \
         --include-non-distributable-layers
 
-
-    IMGPKG_USERNAME=$IMGPKG_REGISTRY_USERNAME
-    IMGPKG_PASSWORD=$IMGPKG_REGISTRY_PASSWORD
+    
+ #   IMGPKG_USERNAME=$IMGPKG_REGISTRY_USERNAME
+ #   IMGPKG_PASSWORD=$IMGPKG_REGISTRY_PASSWORD
     imgpkg copy --concurrency 1  \
         --tar .config/tap-packages-$TAP_VERSION.tar \
         --to-repo $IMGPKG_REGISTRY_HOSTNAME/$SYSTEM_REPO/tap-packages \
@@ -43,8 +44,8 @@ relocate-carvel-bundle() {
         --to-tar .config/carvel-bundle.tar \
         --include-non-distributable-layers
 
-    IMGPKG_USERNAME=$IMGPKG_REGISTRY_USERNAME
-    IMGPKG_PASSWORD=$IMGPKG_REGISTRY_PASSWORD
+ #   IMGPKG_USERNAME=$IMGPKG_REGISTRY_USERNAME
+ #   IMGPKG_PASSWORD=$IMGPKG_REGISTRY_PASSWORD
     imgpkg copy \
         --tar .config/carvel-bundle.tar \
         --to-repo $IMGPKG_REGISTRY_HOSTNAME/$SYSTEM_REPO/cluster-essentials-bundle \
@@ -66,8 +67,8 @@ relocate-tbs-images() {
         --bundle $TANZU_NETWORK_REGISTRY/tanzu-application-platform/full-tbs-deps-package-repo:$tbs_version \
         --to-tar=.config/tbs-full-deps.tar
     
-    IMGPKG_USERNAME=$IMGPKG_REGISTRY_USERNAME
-    IMGPKG_PASSWORD=$IMGPKG_REGISTRY_PASSWORD
+ #   IMGPKG_USERNAME=$IMGPKG_REGISTRY_USERNAME
+ #   IMGPKG_PASSWORD=$IMGPKG_REGISTRY_PASSWORD
     imgpkg copy \
         --tar .config/tbs-full-deps.tar \
         --to-repo=$IMGPKG_REGISTRY_HOSTNAME/$SYSTEM_REPO/tbs-full-deps
@@ -89,8 +90,8 @@ relocate-tds-images() {
 
     scripts/dektecho.sh status "relocating Tanzu Data Services $TDS_VERSION to $IMGPKG_REGISTRY_HOSTNAME/$SYSTEM_REPO/tds-packages"
         
-    IMGPKG_USERNAME=$IMGPKG_REGISTRY_USERNAME
-    IMGPKG_PASSWORD=$IMGPKG_REGISTRY_PASSWORD
+#    IMGPKG_USERNAME=$IMGPKG_REGISTRY_USERNAME
+#    IMGPKG_PASSWORD=$IMGPKG_REGISTRY_PASSWORD
     imgpkg copy --concurrency 1  \
         --bundle $TANZU_NETWORK_REGISTRY/packages-for-vmware-tanzu-data-services/tds-packages:$TDS_VERSION \
         --to-repo $IMGPKG_REGISTRY_HOSTNAME/$SYSTEM_REPO/tds-packages
@@ -104,8 +105,8 @@ add-carvel () {
     
     INSTALL_BUNDLE=$IMGPKG_REGISTRY_HOSTNAME/$SYSTEM_REPO/cluster-essentials-bundle@$CARVEL_BUNDLE \
     INSTALL_REGISTRY_HOSTNAME=$IMGPKG_REGISTRY_HOSTNAME \
-    INSTALL_REGISTRY_USERNAME=$IMGPKG_REGISTRY_USERNAME \
-    INSTALL_REGISTRY_PASSWORD=$IMGPKG_REGISTRY_PASSWORD \
+    INSTALL_REGISTRY_USERNAME=AWS \
+    INSTALL_REGISTRY_PASSWORD=$( aws ecr get-login-password --region $AWS_REGION ) \
     ./install.sh --yes
 
     pushd
@@ -120,8 +121,8 @@ remove-carvel () {
 
     INSTALL_BUNDLE=$IMGPKG_REGISTRY_HOSTNAME/$SYSTEM_REPO/cluster-essentials-bundle@$CARVEL_BUNDLE \
     INSTALL_REGISTRY_HOSTNAME=$IMGPKG_REGISTRY_HOSTNAME \
-    INSTALL_REGISTRY_USERNAME=$IMGPKG_REGISTRY_USERNAME \
-    INSTALL_REGISTRY_PASSWORD=$IMGPKG_REGISTRY_PASSWORD \
+    INSTALL_REGISTRY_USERNAME=AWS \
+    INSTALL_REGISTRY_PASSWORD=$( aws ecr get-login-password --region $AWS_REGION ) \
     ./uninstall.sh --yes
 
     pushd
@@ -133,6 +134,9 @@ remove-carvel () {
 generate-config-yamls() {
 
     scripts/dektecho.sh status "Generating demo configuration yamls"
+
+    #ecr repo
+    export IMGPKG_REGISTRY_HOSTNAME=$(aws sts get-caller-identity --output json | jq -r .Account).dkr.ecr.${AWS_REGION}.amazonaws.com   
 
     #tap-profiles
     mkdir -p .config/tap-profiles
@@ -192,7 +196,7 @@ incorrect-usage() {
 
 case $1 in
 relocate-tanzu-images)
-    aws ecr get-login-password --region us-west-1 | docker login $IMGPKG_REGISTRY_HOSTNAME -u AWS --password-stdin
+    aws ecr get-login-password --region $AWS_REGION | docker login $IMGPKG_REGISTRY_HOSTNAME -u AWS --password-stdin
     docker login registry.tanzu.vmware.com -u $TANZU_NETWORK_USER -p $TANZU_NETWORK_PASSWORD
     case $2 in
     tap)
@@ -220,6 +224,7 @@ add-carvel-tools)
 remove-carvel-tools)
   	remove-carvel
     ;;
+
 generate-configs)
     generate-config-yamls
     ;;

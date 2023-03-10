@@ -273,11 +273,20 @@ aws iam put-role-policy --role-name ${cluster_name}-build-service --policy-name 
 aws iam put-role-policy --role-name ${cluster_name}-workload --policy-name tapWorkload --policy-document file:///tmp/${cluster_name}-workload-policy.json
 }
 
-create-ecr-registry() {
+create-ecr-repos() {
 
-  aws ecr create-repository --repository-name tap-images --region $AWS_REGION
+  aws ecr create-repository --repository-name tap-images/cluster-essentials-bundle --region $AWS_REGION
+  aws ecr create-repository --repository-name tap-images/carvel-docker-image --region $AWS_REGION
+  aws ecr create-repository --repository-name tap-images/tap-packages --region $AWS_REGION
+  aws ecr create-repository --repository-name tap-images/tds-packages --region $AWS_REGION
   aws ecr create-repository --repository-name tap-build-service --region $AWS_REGION
-  aws ecr create-repository --repository-name tap-apps --region $AWS_REGION
+  aws ecr create-repository --repository-name tap-apps/mood-analyzer-application --region $AWS_REGION
+  aws ecr create-repository --repository-name tap-apps/mood-analyzer-team --region $AWS_REGION
+  aws ecr create-repository --repository-name tap-apps/mood-portal-application --region $AWS_REGION
+  aws ecr create-repository --repository-name tap-apps/mood-portal-team --region $AWS_REGION
+  aws ecr create-repository --repository-name tap-apps/mood-sensors-application --region $AWS_REGION
+  aws ecr create-repository --repository-name tap-apps/mood-sensors-team --region $AWS_REGION
+  aws ecr create-repository --repository-name tap-apps/mysensors-dev --region $AWS_REGION
 
 }
 
@@ -423,6 +432,10 @@ delete)
 		;;
 	esac
 	;;	
+create-ecr-repos)
+    create-ecr-repos
+    ;;
+
 init)
 	get-creds $clusterProvider $clusterName
 	verify $clusterName

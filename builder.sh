@@ -71,6 +71,9 @@
        kubectl apply -f .config/cluster-configs/cluster-issuer.yaml
         
         install-crossplane
+
+        # install compositions , TODO use ytt 
+        kubectl apply -f crossplane 
     }
 
     uninstall-view-cluster() {
@@ -81,7 +84,6 @@
         kubectl delete -f .config/cluster-configs/cluster-issuer.yaml
         kubectl delete -f accelerators -n accelerator-system
         uninstall-tap
-#        scripts/tanzu-handler.sh remove-carvel-tools
     }
 
     #install-dev-cluster
@@ -122,7 +124,6 @@
         kubectl delete -f .config/supply-chains/tekton-pipeline.yaml -n $DEV_NAMESPACE
         kubectl delete -f .config/supply-chains/tekton-pipeline.yaml -n $TEAM_NAMESPACE
         uninstall-tap
-#        scripts/tanzu-handler.sh remove-carvel-tools
     }
 
     #install-stage-cluster
@@ -194,8 +195,8 @@
 
         kubectl delete -f .config/cluster-configs/cluster-issuer.yaml
         uninstall-tap
-#        scripts/tanzu-handler.sh remove-carvel-tools
     }
+
     #install-tap
     install-tap() {
 
@@ -235,7 +236,8 @@
         scripts/dektecho.sh status "Setup $appsNamespace namespace on $(kubectl config current-context) cluster"
 
         kubectl create ns $appsNamespace
-
+ 
+       # not necessary for ecr
        # tanzu secret registry add registry-credentials \
        #     --server $PRIVATE_REPO_SERVER \
        #     --username $PRIVATE_REPO_USER \
@@ -577,8 +579,8 @@
 
 case $1 in
 create-clusters)
-##    scripts/k8s-handler.sh create $VIEW_CLUSTER_PROVIDER $VIEW_CLUSTER_NAME $VIEW_CLUSTER_NODES \
-     scripts/k8s-handler.sh create $DEV_CLUSTER_PROVIDER $DEV_CLUSTER_NAME $DEV_CLUSTER_NODES \
+     scripts/k8s-handler.sh create $VIEW_CLUSTER_PROVIDER $VIEW_CLUSTER_NAME $VIEW_CLUSTER_NODES \
+    & scripts/k8s-handler.sh create $DEV_CLUSTER_PROVIDER $DEV_CLUSTER_NAME $DEV_CLUSTER_NODES \
     & scripts/k8s-handler.sh create $STAGE_CLUSTER_PROVIDER $STAGE_CLUSTER_NAME $STAGE_CLUSTER_NODES \
     & scripts/k8s-handler.sh create $PROD_CLUSTER_PROVIDER $PROD_CLUSTER_NAME $PROD_CLUSTER_NODES  
    # & scripts/k8s-handler.sh create $BROWNFIELD_CLUSTER_PROVIDER $BROWNFIELD_CLUSTER_NAME $BROWNFIELD_CLUSTER_NODES  
@@ -591,31 +593,35 @@ install-demo)
     scripts/k8s-handler.sh init $PROD_CLUSTER_PROVIDER $PROD_CLUSTER_NAME
     #scripts/k8s-handler.sh init $BROWNFIELD_CLUSTER_PROVIDER $BROWNFIELD_CLUSTER_NAME
    #install all demo components
-#    install-view-cluster
-#   install-dev-cluster
-#    install-stage-cluster
-#   install-prod-cluster
+    install-view-cluster
+   install-dev-cluster
+    install-stage-cluster
+   install-prod-cluster
     update-multi-cluster-access
     #add-brownfield-apis
-  #  attach-tmc-clusters 
+    attach-tmc-clusters 
     ;;
 delete-all)
     scripts/dektecho.sh prompt  "Are you sure you want to delete all clusters?" && [ $? -eq 0 ] || exit
     ./demo.sh reset
    delete-tmc-clusters
-#    uninstall-view-cluster
+    uninstall-view-cluster
    uninstall-dev-cluster
     uninstall-stage-cluster
    uninstall-prod-cluster
 
-#    scripts/k8s-handler.sh delete $VIEW_CLUSTER_PROVIDER $VIEW_CLUSTER_NAME \
-     scripts/k8s-handler.sh delete $DEV_CLUSTER_PROVIDER $DEV_CLUSTER_NAME \
+      scripts/k8s-handler.sh delete $VIEW_CLUSTER_PROVIDER $VIEW_CLUSTER_NAME \
+    &  scripts/k8s-handler.sh delete $DEV_CLUSTER_PROVIDER $DEV_CLUSTER_NAME \
     & scripts/k8s-handler.sh delete $STAGE_CLUSTER_PROVIDER $STAGE_CLUSTER_NAME \
     & scripts/k8s-handler.sh delete $PROD_CLUSTER_PROVIDER $PROD_CLUSTER_NAME 
   #  & scripts/k8s-handler.sh delete $BROWNFIELD_CLUSTER_PROVIDER $BROWNFIELD_CLUSTER_NAME
     ;;
 generate-configs)
     scripts/tanzu-handler.sh generate-configs
+    ;;
+create-ecr-repos)
+    scripts/k8s-handler.sh create-ecr-repos
+
     ;;
 export-packages)
     scripts/tanzu-handler.sh relocate-tanzu-images $2

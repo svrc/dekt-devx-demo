@@ -35,23 +35,28 @@ clouds:
     projectID: 
     machineType: e2-standard-4
 
+
+
 private_registry:
-  host: 
-  username: 
-  password: 
+  host:  YOUR_AWS_ACCOUNT_ID.dkr.ecr.YOUR_AWS_REGION.amazonaws.com
+  aws_iam_arn: "arn:aws:iam::YOUR AWS ACCOUNT ID:role"
+
+workload_iam_arn: "arn:aws:iam::YOUR AWS ACCOUNT ID:role"
 
 repositories: #repos needs to be created manually in your private registry
-  system: 
-  dev: 
-  stage: 
+  system: tap-images
+  dev: tap-apps
+  stage: tap-apps
+  build_service: tap-build-service
+
 
 tanzu_network:
   username: 
   password: 
 
 tap:
-  tapVersion: "1.4.0"
-  carvelBundle: "sha256:5fd527dda8af0e4c25c427e5659559a2ff9b283f6655a335ae08357ff63b8e7f"
+  tapVersion: "1.4.2"
+  carvelBundle: "sha256:2354688e46d4bb4060f74fca069513c9b42ffa17a0a6d5b0dbb81ed52242ea44"
   imageScanTemplateSrcScanSC: #accepted values: carbonblack-private-image-scan-template snyk-private-image-scan-template, private-image-scan-template
   imageScanTemplateSrcTestScanSC: #accepted values: carbonblack-private-image-scan-template snyk-private-image-scan-template, private-image-scan-template
   ingressIssuer: tap-ingress-selfsigned # if modified, issuer name must be indetical to .config/cluster-configs/cluster-issuer.yaml
@@ -78,12 +83,11 @@ gitops:
   stage: #repo needs to be created manually and clone at the same folder level as the demo repo, make sure git pull works
 
 dns: #e.g. dev.dekt.io / run.dekt.io
-  domain: 
-  sysSubDomain: 
-  devSubDomain: 
-  prodSubDomain: 
-  godaddyApiKey: 
-  godaddyApiSecret: 
+  domain: YOUR TOP LEVEL DOMAIN HERE
+  sysSubDomain: sys
+  devSubDomain: dev
+  prodSubDomain: prod
+  awsRoute53HostedZoneID: YOUR ROUTE53 ZONE ID HERE
 
 data_services:
   tdsVersion: 1.6.0 
