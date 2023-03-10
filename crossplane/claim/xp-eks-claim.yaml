@@ -1,12 +1,12 @@
 apiVersion: xp.tanzu.vmware.com/v1alpha1
 kind: ManagedCluster
 metadata:
-  name: stu-testeks3
+  name: stu-testeks4
   namespace: managed
   labels:
     owner: stu
 spec:
-  id: stu-testeks3
+  id: stu-testeks4
   compositionSelector:
     matchLabels:
       cluster: eks
@@ -14,8 +14,8 @@ spec:
   parameters:
     version: "1.24"
     fargateNamespace: default
-    nodeSize: small ### Supported values: small, medium, large
-    nodeCount: 3
+    nodeSize: large ### Supported values: small, medium, large
+    nodeCount: 5
     region: use1
   writeConnectionSecretToRef:
-    name: stu-testeks3
+    name: stu-testeks4

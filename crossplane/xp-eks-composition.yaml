@@ -17,15 +17,17 @@ spec:
     - fromFieldPath: metadata.labels
   - name: tap-profile
     patches:
-    - fromFieldPath: spec.parameters.profile
-      toFieldPath: spec.
+    - fromFieldPath: spec.parameters.profile  
+      toFieldPath: spec.forProvider.manifest.data[tap.yaml] 
+      policy:
+        fromFieldPath: Required  
       transforms:
       - type: map
         map: 
           run: |            
             profile: run
             shared:
-              ingress_domain: run
+              ingress_domain: prod.tap.ycf.link
               ingress_issuer: tap-ingress-selfsigned
             cnrs:
               domain_template: '{{.Name}}.{{.Domain}}'
@@ -35,11 +37,15 @@ spec:
                   type: LoadBalancer
             appliveview_connector:
               backend:
-                host: appliveview
+                host: appliveview.prod.tap.ycf.link
                 ingressEnabled: true
                 sslDeactivated: true
             ceip_policy_disclosed: true
-      
+      - type: string
+        string: 
+          type: Convert
+          convert: ToBase64
+                                                           
   - name: region
     patches:
     - fromFieldPath: spec.parameters.region
@@ -1574,7 +1580,6 @@ spec:
                 (ytt -f ./bundle/secretgen-controller/config/ -f ./bundle/registry-creds/ --data-values-env YTT | kbld -f- -f ./bundle/.imgpkg/images.yml) > output.yml
                 kapp deploy -a secretgen-controller -n $ns_name -f output.yml "$@"
 
-                kubectl delete clusterrolebinding cluster-essentials-admin
 
     patches:
     - fromFieldPath: spec.id
@@ -1711,7 +1716,6 @@ spec:
             metadata:
               name: tanzu-tap-repository
               namespace: tap-install
-                    
     patches:
     - fromFieldPath: spec.id
       toFieldPath: metadata.name
@@ -1722,12 +1726,68 @@ spec:
     - fromFieldPath: spec.id
       toFieldPath: spec.providerConfigRef.name                 
     - fromFieldPath: spec.parameters.registryHost
-      toFieldPath: spec.forProvider.manifest.spec.fetch.spec.imgpkgBundle.image
+      toFieldPath: spec.forProvider.manifest.spec.fetch.imgpkgBundle.image
       transforms:
       - type: string
         string:
-          fmt: "%s/tap-images/tap-images/tap-packages:1.4.0"
+          fmt: "%s/tap-images/tap-packages:1.4.0"
 
+     
+  - name: k8s-secret-tap-install-values
+    base:
+      apiVersion: kubernetes.crossplane.io/v1alpha1
+      kind: Object
+      spec:
+        forProvider:
+          manifest:
+            apiVersion: v1
+            kind: Secret
+            metadata:
+              namespace: tap-install
+              name: tap-install-values 
+ 
+    patches:
+    - fromFieldPath: spec.id
+      toFieldPath: metadata.name
+      transforms:
+        - type: string
+          string:
+            fmt: "%s-secret-tap-install-values"
+    - fromFieldPath: spec.id
+      toFieldPath: spec.providerConfigRef.name
+    - type: PatchSet
+      patchSetName: tap-profile
+      
+      
+  - name: k8s-crb-tap-install
+    base:
+      apiVersion: kubernetes.crossplane.io/v1alpha1
+      kind: Object
+      spec:
+        forProvider:
+          manifest:
+            apiVersion: rbac.authorization.k8s.io/v1
+            kind: ClusterRoleBinding
+            metadata:
+              name: tap-install-cluster-admin
+            roleRef:
+              apiGroup: rbac.authorization.k8s.io
+              kind: ClusterRole
+              name: cluster-admin
+            subjects:
+            - kind: ServiceAccount
+              name: default
+              namespace: tap-install
+    patches:
+    - fromFieldPath: spec.id
+      toFieldPath: metadata.name
+      transforms:
+        - type: string
+          string:
+            fmt: "%s-crb-tap-install"
+    - fromFieldPath: spec.id
+      toFieldPath: spec.providerConfigRef.name
+      
      
   - name: k8s-packageinstall-tap
     base:
@@ -1738,12 +1798,7 @@ spec:
           manifest:
             apiVersion: packaging.carvel.dev/v1alpha1
             kind: PackageInstall
-            metadata:
-              annotations:
-                tkg.tanzu.vmware.com/tanzu-package-ClusterRole: tap-tap-install-cluster-role
-                tkg.tanzu.vmware.com/tanzu-package-ClusterRoleBinding: tap-tap-install-cluster-rolebinding
-                tkg.tanzu.vmware.com/tanzu-package-Secret: tap-tap-install-values
-                tkg.tanzu.vmware.com/tanzu-package-ServiceAccount: tap-tap-install-sa             
+            metadata:          
               name: tap
               namespace: tap-install             
             spec:
@@ -1752,10 +1807,10 @@ spec:
                 versionSelection:
                   constraints: 1.4.0
                   prereleases: {}
-              serviceAccountName: tap-tap-install-sa
+              serviceAccountName: default
               values:
               - secretRef:
-                  name: tap-tap-install-values  
+                  name: tap-install-values  
     patches:
     - fromFieldPath: spec.id
       toFieldPath: metadata.name
@@ -1765,7 +1820,3 @@ spec:
             fmt: "%s-packageinstall-tap"
     - fromFieldPath: spec.id
       toFieldPath: spec.providerConfigRef.name                 
-
-                                 
-                    
-                    
