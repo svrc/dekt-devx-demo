@@ -10,8 +10,8 @@ TDS_VERSION=$(yq .data_services.tdsVersion .config/demo-values.yaml)
 GW_INSTALL_DIR=$(yq .brownfield_apis.scgwInstallDirectory .config/demo-values.yaml)
 AWS_REGION=$(yq .clouds.aws.region .config/demo-values.yaml)
 export IMGPKG_REGISTRY_HOSTNAME=$(yq .private_registry.host .config/demo-values.yaml)
-#export IMGPKG_REGISTRY_USERNAME=$(yq .private_registry.username .config/demo-values.yaml)
-#export IMGPKG_REGISTRY_PASSWORD=$(yq .private_registry.password .config/demo-values.yaml)
+export IMGPKG_REGISTRY_USERNAME=$(yq .private_registry.username .config/demo-values.yaml)
+export IMGPKG_REGISTRY_PASSWORD=$(yq .private_registry.password .config/demo-values.yaml)
 
 #relocate-tap-images
 relocate-tap-images() {
@@ -23,8 +23,8 @@ relocate-tap-images() {
         --include-non-distributable-layers
 
     
- #   IMGPKG_USERNAME=$IMGPKG_REGISTRY_USERNAME
- #   IMGPKG_PASSWORD=$IMGPKG_REGISTRY_PASSWORD
+    IMGPKG_USERNAME=$IMGPKG_REGISTRY_USERNAME
+    IMGPKG_PASSWORD=$IMGPKG_REGISTRY_PASSWORD
     imgpkg copy --concurrency 1  \
         --tar .config/tap-packages-$TAP_VERSION.tar \
         --to-repo $IMGPKG_REGISTRY_HOSTNAME/$SYSTEM_REPO/tap-packages \
@@ -44,8 +44,8 @@ relocate-carvel-bundle() {
         --to-tar .config/carvel-bundle.tar \
         --include-non-distributable-layers
 
- #   IMGPKG_USERNAME=$IMGPKG_REGISTRY_USERNAME
- #   IMGPKG_PASSWORD=$IMGPKG_REGISTRY_PASSWORD
+    IMGPKG_USERNAME=$IMGPKG_REGISTRY_USERNAME
+    IMGPKG_PASSWORD=$IMGPKG_REGISTRY_PASSWORD
     imgpkg copy \
         --tar .config/carvel-bundle.tar \
         --to-repo $IMGPKG_REGISTRY_HOSTNAME/$SYSTEM_REPO/cluster-essentials-bundle \
@@ -73,8 +73,8 @@ relocate-tbs-images() {
         --bundle $TANZU_NETWORK_REGISTRY/tanzu-application-platform/full-tbs-deps-package-repo:$tbs_version \
         --to-tar=.config/tbs-full-deps.tar
     
- #   IMGPKG_USERNAME=$IMGPKG_REGISTRY_USERNAME
- #   IMGPKG_PASSWORD=$IMGPKG_REGISTRY_PASSWORD
+    IMGPKG_USERNAME=$IMGPKG_REGISTRY_USERNAME
+    IMGPKG_PASSWORD=$IMGPKG_REGISTRY_PASSWORD
     imgpkg copy \
         --tar .config/tbs-full-deps.tar \
         --to-repo=$IMGPKG_REGISTRY_HOSTNAME/$SYSTEM_REPO/tbs-full-deps
@@ -96,8 +96,8 @@ relocate-tds-images() {
 
     scripts/dektecho.sh status "relocating Tanzu Data Services $TDS_VERSION to $IMGPKG_REGISTRY_HOSTNAME/$SYSTEM_REPO/tds-packages"
         
-#    IMGPKG_USERNAME=$IMGPKG_REGISTRY_USERNAME
-#    IMGPKG_PASSWORD=$IMGPKG_REGISTRY_PASSWORD
+    IMGPKG_USERNAME=$IMGPKG_REGISTRY_USERNAME
+    IMGPKG_PASSWORD=$IMGPKG_REGISTRY_PASSWORD
     imgpkg copy --concurrency 1  \
         --bundle $TANZU_NETWORK_REGISTRY/packages-for-vmware-tanzu-data-services/tds-packages:$TDS_VERSION \
         --to-repo $IMGPKG_REGISTRY_HOSTNAME/$SYSTEM_REPO/tds-packages
