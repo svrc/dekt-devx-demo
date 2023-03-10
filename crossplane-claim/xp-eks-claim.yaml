@@ -17,5 +17,6 @@ spec:
     nodeSize: large ### Supported values: small, medium, large
     nodeCount: 5
     region: use1
+    registryHost: 897143170532.dkr.ecr.us-west-1.amazonaws.com
   writeConnectionSecretToRef:
     name: stu-testeks4

@@ -1,0 +1,137 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cluster-essentials-admin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: cluster-essentials
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: scripts
+  namespace: cluster-essentials
+data:
+  install.sh: |
+    #!/bin/bash
+
+    set -e -o pipefail
+    export HOME=/root 
+    export ns_name=cluster-essentials
+
+    echo "## Pulling bundle from $INSTALL_REGISTRY_HOSTNAME"
+
+    [ -z "$INSTALL_REGISTRY_HOSTNAME" ] && { echo "INSTALL_REGISTRY_HOSTNAME env var must not be empty"; exit 1; }
+    [ -z "$CLUSTER_ESSENTIALS_REPO" ] && { echo "CLUSTER_ESSENTIALS_REPO env var must not be empty"; exit 1; }
+    [ -z "$CLUSTER_ESSENTIALS_SHA256" ] && { echo "CLUSTER_ESSENTIALS_SHA256  env var must not be empty"; exit 1; }
+    INSTALL_BUNDLE=${INSTALL_REGISTRY_HOSTNAME}/${CLUSTER_ESSENTIALS_REPO}@${CLUSTER_ESSENTIALS_SHA256}
+    if [ -z "$USE_IAAS_AUTH" ] || [ "$USE_IAAS_AUTH" != true ]; then
+      [ -z "$INSTALL_REGISTRY_USERNAME" ] && { echo "INSTALL_REGISTRY_USERNAME env var must not be empty"; exit 1; }
+      [ -z "$INSTALL_REGISTRY_PASSWORD" ] && { echo "INSTALL_REGISTRY_PASSWORD env var must not be empty"; exit 1; }
+    else
+      export INSTALL_REGISTRY_USERNAME=AWS
+      export INSTALL_REGISTRY_PASSWORD=$(aws ecr get-login-password --region us-west-1)
+    fi
+    export IMGPKG_REGISTRY_HOSTNAME_0=$INSTALL_REGISTRY_HOSTNAME
+    export IMGPKG_REGISTRY_USERNAME_0=$INSTALL_REGISTRY_USERNAME
+    export IMGPKG_REGISTRY_PASSWORD_0=$INSTALL_REGISTRY_PASSWORD
+    export YTT_registry__server=$INSTALL_REGISTRY_HOSTNAME
+    export YTT_registry__username=$INSTALL_REGISTRY_USERNAME
+    export YTT_registry__password=$INSTALL_REGISTRY_PASSWORD
+    
+    KUBECONFIG=kubeconfig
+    kubectl config set-cluster default --server=https://kubernetes.default.svc.cluster.local --certificate-authority /var/run/secrets/kubernetes.io/serviceaccount/ca.crt 
+    kubectl config set-credentials cluster-essentials-default --token=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+    kubectl config set-context default --cluster=default --user=cluster-essentials-default
+    kubectl config use-context default
+    kubectl cluster-info
+
+    imgpkg pull -b $INSTALL_BUNDLE -o ./bundle/
+
+    echo "## Deploying kapp-controller"
+    (ytt -f ./bundle/kapp-controller/config/ -f ./bundle/registry-creds/ --data-values-env YTT --data-value-yaml kappController.deployment.concurrency=10 | kbld -f- -f ./bundle/.imgpkg/images.yml) > output.yml
+    kapp deploy -a kapp-controller -n $ns_name -f output.yml "$@"
+
+    echo "## Deploying secretgen-controller"
+    (ytt -f ./bundle/secretgen-controller/config/ -f ./bundle/registry-creds/ --data-values-env YTT | kbld -f- -f ./bundle/.imgpkg/images.yml) > output.yml
+    kapp deploy -a secretgen-controller -n $ns_name -f output.yml "$@"
+
+    kubectl delete clusterrolebinding cluster-essentials-admin
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: install-cluster-essentials
+  namespace: cluster-essentials
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 3600
+  ttlSecondsAfterFinished: 3600
+  template:
+    spec:
+      restartPolicy: Never
+      volumes:
+        - name: scripts-volume
+          configMap:
+            name: scripts
+      containers:
+      - name: install-cluster-essentials
+        image: 897143170532.dkr.ecr.us-west-1.amazonaws.com/tap-images/carvel-docker-image:latest
+        command: ["/bin/bash"]
+        args: 
+        - /scripts/install.sh
+        - "--yes"
+        resources:
+          requests:
+            cpu: "1000m"
+            memory: "256Mi"
+        volumeMounts:
+        - name: scripts-volume
+          mountPath: /scripts
+        env:
+        - name: USE_IAAS_AUTH
+          valueFrom:
+            secretKeyRef:
+              name: ce-registry
+              key: use_iaas_auth
+              optional: true
+        - name: INSTALL_REGISTRY_HOSTNAME
+          valueFrom:
+            secretKeyRef:
+              name: ce-registry
+              key: host
+              optional: false
+        - name: INSTALL_REGISTRY_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: ce-registry
+              key: username
+              optional: true
+        - name: INSTALL_REGISTRY_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ce-registry
+              key: password
+              optional: true
+        - name: CLUSTER_ESSENTIALS_REPO
+          valueFrom:
+            secretKeyRef:
+              name: ce-registry
+              key: repo
+              optional: false
+        - name: CLUSTER_ESSENTIALS_SHA256
+          valueFrom:
+            secretKeyRef:
+              name: ce-registry
+              key: sha256
+              optional: false
+
+        

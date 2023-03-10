@@ -1,0 +1,9 @@
+apiVersion: accelerator.apps.tanzu.vmware.com/v1alpha1
+kind: Accelerator
+metadata:
+  name: eks-accelerator
+spec:
+  git:
+    url: https://github.com/svrc/eks-accelerator
+    ref:
+      branch: main

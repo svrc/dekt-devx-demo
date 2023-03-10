@@ -33,6 +33,11 @@ This repo contains artifacts to run a demo illustrating the vision and capabilit
 ```
 - verify all yamls created successfully in the ```.config``` folder
 
+- create your ECR repos
+```
+./builder.sh create-ecr-repos
+```
+
 - 
 export Tanzu packages to your private registry if node done prior
 ```

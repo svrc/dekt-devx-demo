@@ -102,7 +102,8 @@ metadata:
           path: ".spec.parameters.registryHost"
           title: Registry for downloading Tanzu Cluster Essentials
           description:  The Tanzu Cluster Essentials installer job will use this registry to download/install the image bundle
-          default: "897143170532.dkr.ecr.us-west-1.amazonaws.com"
+          validation:
+          - required: true
                     
         - name: profile
           controlType: singleInput
@@ -163,13 +164,13 @@ spec:
                   registryHost:
                     description: The Hostname for the Tanzu Cluster Essentials registry
                     type: string
-                    default: "897143170532.dkr.ecr.us-west-1.amazonaws.com"
                   profile:
                     description: Tanzu App Platform profile to install (only "run" is supported currently)
                     type: string
                     default: "run"
                 required:
                 - version
+                - registryHost
             required:
             - id
             - parameters
