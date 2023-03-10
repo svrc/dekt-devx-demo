@@ -9,7 +9,7 @@ TAP_VERSION=$(yq .tap.tapVersion .config/demo-values.yaml)
 TDS_VERSION=$(yq .data_services.tdsVersion .config/demo-values.yaml)
 GW_INSTALL_DIR=$(yq .brownfield_apis.scgwInstallDirectory .config/demo-values.yaml)
 AWS_REGION=$(yq .clouds.aws.region .config/demo-values.yaml)
-export IMGPKG_REGISTRY_HOSTNAME=$(yq .private_registry.hostname .config/demo-values.yaml)
+export IMGPKG_REGISTRY_HOSTNAME=$(yq .private_registry.host .config/demo-values.yaml)
 #export IMGPKG_REGISTRY_USERNAME=$(yq .private_registry.username .config/demo-values.yaml)
 #export IMGPKG_REGISTRY_PASSWORD=$(yq .private_registry.password .config/demo-values.yaml)
 
