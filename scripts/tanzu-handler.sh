@@ -54,6 +54,12 @@ relocate-carvel-bundle() {
     rm -f .config/carvel-bundle.tar
 }
 
+relocate-carvel-job-image() {
+    scripts/dektecho.sh status "building carvel image with aws and kubectl"
+    docker build scripts/carvel/ -t $IMGPKG_REGISTRY_HOSTNAME/$SYSTEM_REPO/carvel-docker-image:latest
+    docker push $IMGPKG_REGISTRY_HOSTNAME/$SYSTEM_REPO/carvel-docker-image:latest 
+}
+
 #relocate-tbs-images
 relocate-tbs-images() {
 
@@ -199,7 +205,11 @@ relocate-tanzu-images)
     aws ecr get-login-password --region $AWS_REGION | docker login $IMGPKG_REGISTRY_HOSTNAME -u AWS --password-stdin
     docker login registry.tanzu.vmware.com -u $TANZU_NETWORK_USER -p $TANZU_NETWORK_PASSWORD
     case $2 in
+    job)
+        relocate-carvel-job-image
+        ;;
     tap)
+        relocate-carvel-job-image
         relocate-carvel-bundle
         relocate-tap-images
         ;;
