@@ -102,8 +102,6 @@ metadata:
           path: ".spec.parameters.registryHost"
           title: Registry for downloading Tanzu Cluster Essentials
           description:  The Tanzu Cluster Essentials installer job will use this registry to download/install the image bundle
-          validation:
-          - required: true
                     
         - name: profile
           controlType: singleInput
@@ -164,14 +162,13 @@ spec:
                   registryHost:
                     description: The Hostname for the Tanzu Cluster Essentials registry
                     type: string
-		    default: 
+		    default: YOUR_REGISTRY_HOST
                   profile:
                     description: Tanzu App Platform profile to install (only "run" is supported currently)
                     type: string
                     default: "run"
                 required:
                 - version
-                - registryHost
             required:
             - id
             - parameters
