@@ -164,6 +164,7 @@ spec:
                   registryHost:
                     description: The Hostname for the Tanzu Cluster Essentials registry
                     type: string
+		    default: 
                   profile:
                     description: Tanzu App Platform profile to install (only "run" is supported currently)
                     type: string
