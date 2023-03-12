@@ -72,8 +72,12 @@
         
         install-crossplane
 
-        # install compositions , TODO use ytt 
-        kubectl apply -f crossplane 
+        # install compositions 
+        kubectl apply -f crossplane/crossplane.yaml
+        kubectl apply -f crossplane/definition.yaml
+        kubectl apply -f crossplane/provider-config.yaml
+        kubectl apply -f crossplane/service-providers.yaml
+        ytt -f crossplane/static-values.yaml -f crossplane/xp-eks-composition-ytt.yaml | kubectl apply -f-
     }
 
     uninstall-view-cluster() {
@@ -96,7 +100,7 @@
         scripts/tanzu-handler.sh add-carvel-tools
 
         add-app-rbac $DEV_NAMESPACE dev
-        add-app-rbac $TEAM_NAMESPACE dev
+        add-app-rbac $TEAM_NAMESPACE team
 
         install-tap "tap-iterate.yaml" 
 
