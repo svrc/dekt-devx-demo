@@ -78,6 +78,7 @@
     }
  
     install-crossplane-compositions() {
+        kubectl config use-context $VIEW_CLUSTER_NAME
         ytt -f crossplane/definition-ytt.yaml -v shared_domain=$DOMAIN -v region=$AWS_REGION -v registryHost=$PRIVATE_REPO_SERVER | kubectl apply -f-
         kubectl apply -f crossplane/provider-config.yaml
         kubectl apply -f crossplane/service-providers.yaml       
