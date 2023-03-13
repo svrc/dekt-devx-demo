@@ -35,6 +35,7 @@
     TEAM_NAMESPACE=$(yq .apps_namespaces.team .config/demo-values.yaml)
     STAGEPROD_NAMESPACE=$(yq .apps_namespaces.stageProd .config/demo-values.yaml)
     #domains
+    DOMAIN=$(yq .dns.domain .config/demo-values.yaml)
     SYSTEM_SUB_DOMAIN=$(yq .dns.sysSubDomain .config/demo-values.yaml)
     DEV_SUB_DOMAIN=$(yq .dns.devSubDomain .config/demo-values.yaml)
     RUN_SUB_DOMAIN=$(yq .dns.prodSubDomain .config/demo-values.yaml)
@@ -73,13 +74,16 @@
         install-crossplane
 
         # install compositions 
-        kubectl apply -f crossplane/crossplane.yaml
-        kubectl apply -f crossplane/definition.yaml
-        kubectl apply -f crossplane/provider-config.yaml
-        kubectl apply -f crossplane/service-providers.yaml
-        ytt -f crossplane/static-values.yaml -f crossplane/xp-eks-composition-ytt.yaml | kubectl apply -f-
+        install-crossplane-compositions
     }
-
+ 
+    install-crossplane-compositions() {
+        ytt -f crossplane/definition-ytt.yaml -v shared_domain=$DOMAIN -v region=$AWS_REGION -v registryHost=$PRIVATE_REPO_SERVER | kubectl apply -f-
+        kubectl apply -f crossplane/provider-config.yaml
+        kubectl apply -f crossplane/service-providers.yaml       
+        ytt -f crossplane/static-values.yaml -f crossplane/xp-eks-composition-ytt.yaml  | kubectl apply -f-
+    }
+    
     uninstall-view-cluster() {
         scripts/dektecho.sh info "deleting  demo components for $VIEW_CLUSTER_NAME cluster"
 
@@ -570,6 +574,10 @@
         echo
         echo "  generate-configs"
         echo
+        echo "  install-xp-compositions"
+        echo
+        echo "  create-ecr-repos"
+        echo
         echo "  export-packages tap|tbs|tds|scgw"
         echo
         echo "  runme [ function-name ]"
@@ -623,6 +631,10 @@ delete-all)
 generate-configs)
     scripts/tanzu-handler.sh generate-configs
     ;;
+install-xp-compositions)
+    install-crossplane-compositions
+    ;;
+    
 create-ecr-repos)
     scripts/k8s-handler.sh create-ecr-repos
 

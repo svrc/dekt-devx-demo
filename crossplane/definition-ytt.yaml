@@ -1,3 +1,5 @@
+#@ load("@ytt:data", "data")
+---
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
@@ -162,13 +164,25 @@ spec:
                   registryHost:
                     description: The Hostname for the Tanzu Cluster Essentials registry
                     type: string
-                    default: YOUR_REGISTRY_HOST
+                    default: #@ data.values.registryHost
+                  subDomain:
+                    description: The subdomain for Apps to run on this cluster 
+                    type: string
+                  domain:
+                    description: The base domain for Tanzu App Platform apps running on this cluster
+                    type: string
+                    default: #@ data.values.shared_domain
+                  registryRegion:
+                    description: The Region for the Tanzu Cluster Essentials registry
+                    type: string
+                    default: #@ data.values.region                
                   profile:
                     description: Tanzu App Platform profile to install (only "run" is supported currently)
                     type: string
                     default: "run"
                 required:
                 - version
+                - subDomain
             required:
             - id
             - parameters
@@ -195,6 +209,9 @@ spec:
                 type: string
               oidcIssuerURL:
                 description: OIDC issuer URL
+                type: string
+              tapProfile:
+                description: TAP profile configuration
                 type: string
     additionalPrinterColumns:
     - name: clusterName
