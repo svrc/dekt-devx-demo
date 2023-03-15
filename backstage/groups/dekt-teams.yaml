@@ -1,12 +1,12 @@
 apiVersion: backstage.io/v1alpha1
 kind: Group
 metadata:
-  name: svrc-dev-team1
+  name: dekt-dev-team1
   description: Developement team1
 spec:
   type: team
   profile:
-    displayName: svrc-dev-team1
+    displayName: dekt-dev-team1
     email: scharlton@vmware.com
     picture: https://avatars.dicebear.com/api/identicon/team-a@example.com.svg?background=%23fff&margin=25
   parent: default-org
@@ -15,12 +15,12 @@ spec:
 apiVersion: backstage.io/v1alpha1
 kind: Group
 metadata:
-  name: svrc-dev-team2
+  name: dekt-dev-team2
   description: Developement team2
 spec:
   type: team
   profile:
-    displayName: svrc-dev-team2
+    displayName: dekt-dev-team2
     email: scharlton@vmware.com
     picture: https://avatars.dicebear.com/api/identicon/team-a@example.com.svg?background=%23fff&margin=25
   parent: default-org
@@ -29,7 +29,7 @@ spec:
 apiVersion: backstage.io/v1alpha1
 kind: Group
 metadata:
-  name: svrc-app-ops
+  name: dekt-app-ops
   description: Applications operation team
 spec:
   type: team
@@ -43,7 +43,7 @@ spec:
 apiVersion: backstage.io/v1alpha1
 kind: Group
 metadata:
-  name: svrc-platform-ops
+  name: dekt-platform-ops
   description: Platform operation team
 spec:
   type: team

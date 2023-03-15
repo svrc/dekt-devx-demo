@@ -6,5 +6,5 @@ metadata:
   annotations:
     'backstage.io/techdocs-ref': dir:.
 spec:
-  owner: svrc-app-ops
+  owner: dekt-app-ops
   domain: dekt-domain
