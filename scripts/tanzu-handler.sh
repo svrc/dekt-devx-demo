@@ -173,6 +173,7 @@ generate-config-yamls() {
     mkdir -p .config/cluster-configs
     cp -a config-templates/cluster-configs/ .config/cluster-configs/
     ytt -f config-templates/cluster-configs/single-user-access.yaml -v cluster_type=dev --data-values-file=.config/demo-values.yaml > .config/cluster-configs/single-user-access-dev.yaml
+    ytt -f config-templates/cluster-configs/single-user-access.yaml -v cluster_type=dev --data-values-file=.config/demo-values.yaml > .config/cluster-configs/single-user-access-team.yaml
     ytt -f config-templates/cluster-configs/single-user-access.yaml -v cluster_type=stage --data-values-file=.config/demo-values.yaml > .config/cluster-configs/single-user-access-stage.yaml
     ytt -f config-templates/cluster-configs/single-user-access.yaml -v cluster_type=prod --data-values-file=.config/demo-values.yaml > .config/cluster-configs/single-user-access-prod.yaml
     

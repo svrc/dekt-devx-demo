@@ -71,10 +71,10 @@
 
        kubectl apply -f .config/cluster-configs/cluster-issuer.yaml
         
-        install-crossplane
+#        install-crossplane
 
         # install compositions 
-        install-crossplane-compositions
+ #       install-crossplane-compositions
     }
  
     install-crossplane-compositions() {
@@ -486,7 +486,7 @@
         scripts/dektecho.sh status "adding 'provider' components on $BROWNFIELD_CLUSTER_NAME cluster"
         kubectl config use-context $BROWNFIELD_CLUSTER_NAME
         kubectl create ns scgw-system
-        kubectl create secret docker-registry spring-cloud-gateway-image-pull-secret --docker-server=$PRIVATE_REPO_SERVER --docker-username=$PRIVATE_REPO_USER --docker-password=$PRIVATE_REPO_PASSWORD --namespace scgw-system
+#        kubectl create secret docker-registry spring-cloud-gateway-image-pull-secret --docker-server=$PRIVATE_REPO_SERVER --docker-username=$PRIVATE_REPO_USER --docker-password=$PRIVATE_REPO_PASSWORD --namespace scgw-system
         $GW_INSTALL_DIR/scripts/install-spring-cloud-gateway.sh --namespace scgw-system
         kubectl create ns $brownfield_apis_ns
         kubectl apply -f brownfield-apis/sentiment.yaml -n $brownfield_apis_ns
@@ -494,7 +494,7 @@
         scripts/dektecho.sh status "adding 'provider' components on $PRIVATE_CLUSTER_NAME cluster"
         kubectl config use-context $PRIVATE_CLUSTER_NAME
         kubectl create ns scgw-system
-        kubectl create secret docker-registry spring-cloud-gateway-image-pull-secret --docker-server=$PRIVATE_REPO_SERVER --docker-username=$PRIVATE_REPO_USER --docker-password=$PRIVATE_REPO_PASSWORD --namespace scgw-system
+#        kubectl create secret docker-registry spring-cloud-gateway-image-pull-secret --docker-server=$PRIVATE_REPO_SERVER --docker-username=$PRIVATE_REPO_USER --docker-password=$PRIVATE_REPO_PASSWORD --namespace scgw-system
         $GW_INSTALL_DIR/scripts/install-spring-cloud-gateway.sh --namespace scgw-system
         kubectl create ns $brownfield_apis_ns
         kubectl apply -f brownfield-apis/datacheck.yaml -n $brownfield_apis_ns
@@ -524,11 +524,11 @@
 
         scripts/dektecho.sh info "Attaching clusters to TMC"
 
-        attach-tmc-cluster $VIEW_CLUSTER_NAME
-        attach-tmc-cluster $DEV_CLUSTER_NAME
-        attach-tmc-cluster $STAGE_CLUSTER_NAME
+    #    attach-tmc-cluster $VIEW_CLUSTER_NAME
+     #   attach-tmc-cluster $DEV_CLUSTER_NAME
+      #  attach-tmc-cluster $STAGE_CLUSTER_NAME
         attach-tmc-cluster $PROD_CLUSTER_NAME
-       # attach-tmc-cluster $BROWNFIELD_CLUSTER_NAME
+   #     attach-tmc-cluster $BROWNFIELD_CLUSTER_NAME
 
     }
     #attach TMC cluster
@@ -556,7 +556,7 @@
         tmc cluster delete $DEV_CLUSTER_NAME -f -m attached -p attached
         tmc cluster delete $STAGE_CLUSTER_NAME -f -m attached -p attached
         tmc cluster delete $PROD_CLUSTER_NAME -f -m attached -p attached
-      #  tmc cluster delete $BROWNFIELD_CLUSTER_NAME -f -m attached -p attached
+        tmc cluster delete $BROWNFIELD_CLUSTER_NAME -f -m attached -p attached
     }
 
     
@@ -592,27 +592,27 @@
 
 case $1 in
 create-clusters)
-     scripts/k8s-handler.sh create $VIEW_CLUSTER_PROVIDER $VIEW_CLUSTER_NAME $VIEW_CLUSTER_NODES \
-    & scripts/k8s-handler.sh create $DEV_CLUSTER_PROVIDER $DEV_CLUSTER_NAME $DEV_CLUSTER_NODES \
-    & scripts/k8s-handler.sh create $STAGE_CLUSTER_PROVIDER $STAGE_CLUSTER_NAME $STAGE_CLUSTER_NODES \
-    & scripts/k8s-handler.sh create $PROD_CLUSTER_PROVIDER $PROD_CLUSTER_NAME $PROD_CLUSTER_NODES  
-   # & scripts/k8s-handler.sh create $BROWNFIELD_CLUSTER_PROVIDER $BROWNFIELD_CLUSTER_NAME $BROWNFIELD_CLUSTER_NODES  
+   #  scripts/k8s-handler.sh create $VIEW_CLUSTER_PROVIDER $VIEW_CLUSTER_NAME $VIEW_CLUSTER_NODES \
+#     scripts/k8s-handler.sh create $DEV_CLUSTER_PROVIDER $DEV_CLUSTER_NAME $DEV_CLUSTER_NODES \
+#    & scripts/k8s-handler.sh create $STAGE_CLUSTER_PROVIDER $STAGE_CLUSTER_NAME $STAGE_CLUSTER_NODES \
+     scripts/k8s-handler.sh create $PROD_CLUSTER_PROVIDER $PROD_CLUSTER_NAME $PROD_CLUSTER_NODES   
+#    & scripts/k8s-handler.sh create $BROWNFIELD_CLUSTER_PROVIDER $BROWNFIELD_CLUSTER_NAME $BROWNFIELD_CLUSTER_NODES  
     ;;
 install-demo)
    #set k8s contexts and verify cluster install
-    scripts/k8s-handler.sh init $VIEW_CLUSTER_PROVIDER $VIEW_CLUSTER_NAME
+#    scripts/k8s-handler.sh init $VIEW_CLUSTER_PROVIDER $VIEW_CLUSTER_NAME
     scripts/k8s-handler.sh init $DEV_CLUSTER_PROVIDER $DEV_CLUSTER_NAME
     scripts/k8s-handler.sh init $STAGE_CLUSTER_PROVIDER $STAGE_CLUSTER_NAME
     scripts/k8s-handler.sh init $PROD_CLUSTER_PROVIDER $PROD_CLUSTER_NAME
-    #scripts/k8s-handler.sh init $BROWNFIELD_CLUSTER_PROVIDER $BROWNFIELD_CLUSTER_NAME
+#    scripts/k8s-handler.sh init $BROWNFIELD_CLUSTER_PROVIDER $BROWNFIELD_CLUSTER_NAME
    #install all demo components
     install-view-cluster
    install-dev-cluster
     install-stage-cluster
    install-prod-cluster
     update-multi-cluster-access
-    #add-brownfield-apis
-    attach-tmc-clusters 
+#    add-brownfield-apis
+#    attach-tmc-clusters 
     ;;
 delete-all)
     scripts/dektecho.sh prompt  "Are you sure you want to delete all clusters?" && [ $? -eq 0 ] || exit
@@ -623,11 +623,11 @@ delete-all)
     uninstall-stage-cluster
    uninstall-prod-cluster
 
-      scripts/k8s-handler.sh delete $VIEW_CLUSTER_PROVIDER $VIEW_CLUSTER_NAME \
-    &  scripts/k8s-handler.sh delete $DEV_CLUSTER_PROVIDER $DEV_CLUSTER_NAME \
+   #   scripts/k8s-handler.sh delete $VIEW_CLUSTER_PROVIDER $VIEW_CLUSTER_NAME \
+      scripts/k8s-handler.sh delete $DEV_CLUSTER_PROVIDER $DEV_CLUSTER_NAME \
     & scripts/k8s-handler.sh delete $STAGE_CLUSTER_PROVIDER $STAGE_CLUSTER_NAME \
-    & scripts/k8s-handler.sh delete $PROD_CLUSTER_PROVIDER $PROD_CLUSTER_NAME 
-  #  & scripts/k8s-handler.sh delete $BROWNFIELD_CLUSTER_PROVIDER $BROWNFIELD_CLUSTER_NAME
+    & scripts/k8s-handler.sh delete $PROD_CLUSTER_PROVIDER $PROD_CLUSTER_NAME  
+#    & scripts/k8s-handler.sh delete $BROWNFIELD_CLUSTER_PROVIDER $BROWNFIELD_CLUSTER_NAME
     ;;
 generate-configs)
     scripts/tanzu-handler.sh generate-configs
