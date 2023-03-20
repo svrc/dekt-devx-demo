@@ -141,9 +141,10 @@
 
         scripts/dektecho.sh status "Applying Deliverables and ServiceBindings to $PROD_CLUSTER cluster..."
         
-        kubectl apply -f ../$GITOPS_STAGE_REPO/config/$STAGEPROD_NAMESPACE/$ANALYZER_WORKLOAD -n $STAGEPROD_NAMESPACE
-        kubectl apply -f ../$GITOPS_STAGE_REPO/config/$STAGEPROD_NAMESPACE/$PORTAL_WORKLOAD -n $STAGEPROD_NAMESPACE
-        kubectl apply -f ../$GITOPS_STAGE_REPO/config/$STAGEPROD_NAMESPACE/$SENSORS_WORKLOAD -n $STAGEPROD_NAMESPACE
+        #kubectl apply -f ../$GITOPS_STAGE_REPO/config/$STAGEPROD_NAMESPACE/$ANALYZER_WORKLOAD -n $STAGEPROD_NAMESPACE
+        #kubectl apply -f ../$GITOPS_STAGE_REPO/config/$STAGEPROD_NAMESPACE/$PORTAL_WORKLOAD -n $STAGEPROD_NAMESPACE
+        # kubectl apply -f ../$GITOPS_STAGE_REPO/config/$STAGEPROD_NAMESPACE/$SENSORS_WORKLOAD -n $STAGEPROD_NAMESPACE
+        kubectl apply -f ./*-deliverable.yaml -n $STAGEPROD_NAMESPACE
 
         scripts/dektecho.sh status "Your DevX-Mood application is being deployed to production"
 
@@ -303,9 +304,9 @@
         kubectl delete -f .config/data-services/tanzu/reading-instance-tanzu_rabbitmq.yaml -n $STAGEPROD_NAMESPACE
 
         kubectl config use-context $PROD_CLUSTER
-        kubectl delete -f ../$GITOPS_STAGE_REPO/config/dekt-apps/$ANALYZER_WORKLOAD -n $STAGEPROD_NAMESPACE
-        kubectl delete -f ../$GITOPS_STAGE_REPO/config/dekt-apps/$PORTAL_WORKLOAD -n $STAGEPROD_NAMESPACE
-        kubectl delete -f ../$GITOPS_STAGE_REPO/config/dekt-apps/$SENSORS_WORKLOAD -n $STAGEPROD_NAMESPACE
+        kubectl delete -f ../$GITOPS_STAGE_REPO/config/$STAGEPROD_NAMESPACE/$ANALYZER_WORKLOAD -n $STAGEPROD_NAMESPACE
+        kubectl delete -f ../$GITOPS_STAGE_REPO/config/$STAGEPROD_NAMESPACE/$PORTAL_WORKLOAD -n $STAGEPROD_NAMESPACE
+        kubectl delete -f ../$GITOPS_STAGE_REPO/config/$STAGEPROD_NAMESPACE/$SENSORS_WORKLOAD -n $STAGEPROD_NAMESPACE
         tanzu service resource-claim delete postgres-claim -y -n $STAGEPROD_NAMESPACE
         tanzu service resource-claim delete rabbitmq-claim -y -n $STAGEPROD_NAMESPACE
         kubectl delete -f .config/data-services/rds-postgres/inventory-db-rds-instance.yaml -n $STAGEPROD_NAMESPACE

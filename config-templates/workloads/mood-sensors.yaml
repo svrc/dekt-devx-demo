@@ -20,7 +20,7 @@ spec:
       ref:
         apiVersion: services.apps.tanzu.vmware.com/v1alpha1
         kind: ResourceClaim
-        name: inventory-db
+        name: postgres-claim
     - name: rabbitmq-claim
       ref:
         apiVersion: rabbitmq.com/v1beta1
