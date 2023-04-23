@@ -7,5 +7,7 @@
 # ignore carvel bundle
 scripts/carvel
 
+crossplane/secure-values.yaml
+
 gitops-dev/
 gitops-stage/
