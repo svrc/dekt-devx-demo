@@ -10,3 +10,11 @@ spec:
       namespace: crossplane-system
       name: aws-provider-creds
       key: creds
+---
+apiVersion: kubernetes.crossplane.io/v1alpha1
+kind: ProviderConfig
+metadata:
+  name: kubernetes-provider
+spec:
+  credentials:
+    source: InjectedIdentity

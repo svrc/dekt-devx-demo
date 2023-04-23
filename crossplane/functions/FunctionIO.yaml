@@ -1,0 +1,203 @@
+apiVersion: apiextensions.crossplane.io/v1alpha1
+kind: FunctionIO
+observed:
+  # The observed state of the Composite Resource.
+  composite:
+    resource:
+      apiVersion: xp.tanzu.vmware.com/v1alpha1
+      kind: XManagedCluster
+      metadata:
+       
+        generateName: stu-testeks8-
+        labels:
+          crossplane.io/claim-name: stu-testeks8
+          crossplane.io/claim-namespace: managed
+          crossplane.io/composite: stu-testeks8-hckjb
+          owner: stu
+        name: stu-testeks8-hckjb
+        
+      spec:
+        claimRef:
+          apiVersion: xp.tanzu.vmware.com/v1alpha1
+          kind: ManagedCluster
+          name: stu-testeks8
+          namespace: managed
+        compositionRef:
+          name: native-eks
+        compositionRevisionRef:
+          name: native-eks-0654048
+        compositionSelector:
+          matchLabels:
+            cluster: eks
+            provider: native
+        compositionUpdatePolicy: Automatic
+        id: stu-testeks8
+        parameters:
+          domain: tap.ycf.link
+          fargateNamespace: default
+          nodeCount: 5
+          nodeSize: large
+          profile: run
+          region: use1
+          registryHost: 897143170532.dkr.ecr.us-west-1.amazonaws.com
+          registryRegion: us-west-1
+          subDomain: cluster2
+          version: "1.24"
+      status:
+        accountID: "897143170532"
+        clusterName: cluster-stu-testeks8
+        conditions:
+        - lastTransitionTime: "2023-04-23T00:02:58Z"
+          message: 'cannot compose resources: cannot run Composition Function pipeline:
+            cannot run function "update-view-cluster": cannot run container: rpc error:
+            code = Unknown desc = exit status 1: xfn: error: spark.Command.Run(): OCI runtime
+            error: exit status 1'
+          reason: ReconcileError
+          status: "False"
+          type: Synced
+        - lastTransitionTime: "2023-04-22T13:32:27Z"
+          reason: Creating
+          status: "False"
+          type: Ready
+        connectionDetails:
+          lastPublishedTime: "2023-04-23T00:01:49Z"
+        controlPlaneStatus: ACTIVE
+        endpoint: https://21B7AEB9991B57AF63A1E1DD5C9176A4.gr7.us-east-1.eks.amazonaws.com
+        fargateProfileStatus: ACTIVE
+        nodePoolStatus: ACTIVE
+        oidcIssuerID: oidc.eks.us-east-1.amazonaws.com/id/21B7AEB9991B57AF63A1E1DD5C9176A4
+        oidcIssuerURL: https://oidc.eks.us-east-1.amazonaws.com/id/21B7AEB9991B57AF63A1E1DD5C9176A4
+        tapLoadBalancerHostname: a145053fb448d4483a9420837baad4df-1313100325.us-east-1.elb.amazonaws.com
+        tapProfile: |
+          profile: run
+          shared:
+            ingress_domain: "cluster2.tap.ycf.link"
+            ingress_issuer: tap-ingress-selfsigned
+          cnrs:
+            domain_template: '{{.Name}}.{{.Domain}}'
+          contour:
+            envoy:
+              service:
+                type: LoadBalancer
+          appliveview_connector:
+            backend:
+              host: "appliveview.cluster2.tap.ycf.link"
+              ingressEnabled: true
+              sslDeactivated: true
+          ceip_policy_disclosed: true
+          
+  resources:
+  - name: k8s-view-cluster-observe-secret
+    resource:
+      apiVersion: kubernetes.crossplane.io/v1alpha1
+      kind: Object
+      metadata:
+        annotations:
+          crossplane.io/composition-resource-name: k8s-view-cluster-observe-secret
+          crossplane.io/external-name: stu-testeks8-view-cluster-observe-secret
+        
+        generateName: stu-testeks8-hckjb-
+        generation: 1
+        labels:
+          crossplane.io/claim-name: stu-testeks8
+          crossplane.io/claim-namespace: managed
+          crossplane.io/composite: stu-testeks8-hckjb
+        name: stu-testeks8-view-cluster-observe-secret
+        
+      spec:
+        deletionPolicy: Delete
+        forProvider:
+          manifest:
+            apiVersion: v1
+            kind: Secret
+            metadata:
+              name: tap-tap-install-values
+              namespace: tap-install
+        managementPolicy: ObserveCreateUpdate
+        providerConfigRef:
+          name: kubernetes-provider
+      status:
+        atProvider:
+          manifest:
+            apiVersion: v1
+            data:
+              tap-view.yaml: base64_here
+            kind: Secret
+  - name: k8s-tap-gui-viewer-secret
+    resource: 
+      apiVersion: kubernetes.crossplane.io/v1alpha1
+      kind: Object
+      metadata:
+      
+        name: stu-testeks8-gui-viewer-secret-tap
+        
+      spec:
+        deletionPolicy: Delete
+        forProvider:
+          manifest:
+            apiVersion: v1
+            kind: Secret
+            metadata:
+              annotations:
+                kubernetes.io/service-account.name: tap-gui-viewer
+              name: tap-gui-viewer
+              namespace: tap-gui
+            type: kubernetes.io/service-account-token
+        managementPolicy: Default
+        providerConfigRef:
+          name: stu-testeks8
+      status:
+        atProvider:
+          manifest:
+            apiVersion: v1
+            data:
+              ca.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUMvakNDQWVhZ0F3SUJBZ0lCQURBTkJna3Foa2lHOXcwQkFRc0ZBREFWTVJNd0VRWURWUVFERXdwcmRXSmwKY201bGRHVnpNQjRYRFRJek1EUXlNakV6TXpneE5Wb1hEVE16TURReE9URXpNemd4TlZvd0ZURVRNQkVHQTFVRQpBeE1LYTNWaVpYSnVaWFJsY3pDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRGdnRVBBRENDQVFvQ2dnRUJBTFdSCmROcmNvT2xqaDRNYlBRNHNvM3ZWMW9neFUzWnF2dnUwK2JUb3FWNjBmNlcwbm5Oc1VFMjF0WTFhTVZuM2tnZG4KUVFrUkVTRFBpc1RKZjBkS0tvNXo1aDllbmhUaW9aNU9LV2YwdWc1M2JicWIyWEUxRzVwUzlVMmZCUmJqM1RWYwpvN0RNMXJGVDY2UUpGd3R3VUhud0QvUExZVkt4NllRVlQ5bXZVKzlkWWVqaHVYSXQyRm5OcmxrNXRqZGRLVXZuCkY3amgwem5CaDVNM2F5K0kxVTdiem13cXJDa3NHYlI4dWxyUERDNG4rbWdmZ0MySXFMdXhDQlJYUmJmZWpZaHkKSTR4ZXFDRG16OWVtMktvVWJvT05qZkJaMjhjZVM0VWpIRWZ3M3F4d0dVMmRWQkI4TXp4SmtxczgyQ2k1Y1k4Mgp3OEQvTnlDNVZjYmZYb2NGYmlrQ0F3RUFBYU5aTUZjd0RnWURWUjBQQVFIL0JBUURBZ0trTUE4R0ExVWRFd0VCCi93UUZNQU1CQWY4d0hRWURWUjBPQkJZRUZEVjJZc0pWMTdhcWlpNTR4ZzgycUhOcDU4T1VNQlVHQTFVZEVRUU8KTUF5Q0NtdDFZbVZ5Ym1WMFpYTXdEUVlKS29aSWh2Y05BUUVMQlFBRGdnRUJBRUNBN1lRVDllU1UzS25rMStSZwpEL0M2bDdhRXFBRzRPTDVKbmREejVnWnlBZVhFYXYvL05mekViNVVsUkVRV3lLWUZWZlJiMTFSdU1MVDV2RVFvCnJWblpqbGFPdllLdlVYcVVLQjNBRElvQUlTUUtBeUVVTjcrd2RHT3B6NjJEbmZiTW42R3pxLzJGczdOak5YMWIKcThqbEtFMExkMmZvWTFBVk5LTnhkUGdjb1BzLzc3Tm41UDdMa3FTb2xPNjdrK1lUS3pES2ZpZ29uMGR1ZmVweQpGT2dBMEJHcXRlZmtDeGtlK29XUlZ1d01oV1IzUUIzNyt0SGF0K04wMVE4WkkxQWRySHlWRUgvYzkxd1hvemR2CjRnV0lRS0tPYzFhcnJZOFNzUHNmSlRYNllNYkxmQmF1SXR3OXpmSEQ5Vm5GR1pPUlV1VGJWZ3NPK0NjVjZxUlgKVXFnPQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+              namespace: dGFwLWd1aQ==
+              token: base64_here
+            kind: Secret
+            metadata:              
+              name: tap-gui-viewer
+              namespace: tap-gui
+              resourceVersion: "980"
+              uid: 9733c44e-aeab-4889-8614-afc3df42fbe3
+            type: kubernetes.io/service-account-token         
+    
+desired:
+  resources:
+  - name: k8s-view-cluster-observe-secret
+    resource:
+      apiVersion: kubernetes.crossplane.io/v1alpha1
+      kind: Object
+      metadata:
+        annotations:
+          crossplane.io/composition-resource-name: k8s-view-cluster-observe-secret
+          crossplane.io/external-name: stu-testeks8-view-cluster-observe-secret
+        
+        generateName: stu-testeks8-hckjb-
+        generation: 1
+        labels:
+          crossplane.io/claim-name: stu-testeks8
+          crossplane.io/claim-namespace: managed
+          crossplane.io/composite: stu-testeks8-hckjb
+        name: stu-testeks8-view-cluster-observe-secret
+        
+      spec:
+        deletionPolicy: Delete
+        forProvider:
+          manifest:
+            apiVersion: v1
+            kind: Secret
+            metadata:
+              name: tap-tap-install-values
+              namespace: tap-install
+        managementPolicy: ObserveCreateUpdate
+        providerConfigRef:
+          name: kubernetes-provider
+      status:
+        atProvider:
+          manifest:
+            apiVersion: v1
+            data:
+              tap-view.yaml: base64_here
+            kind: Secret
+            

@@ -213,6 +213,12 @@ spec:
               tapProfile:
                 description: TAP profile configuration
                 type: string
+              tapLoadBalancerHostname:
+                description: TAP load balancer hostname
+                type: string         
+              endpoint:
+                description: TAP cluster API endpoint
+                type: string        
     additionalPrinterColumns:
     - name: clusterName
       type: string

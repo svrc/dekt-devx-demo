@@ -71,17 +71,14 @@
 
        kubectl apply -f .config/cluster-configs/cluster-issuer.yaml
         
-#        install-crossplane
+        install-crossplane
 
-        # install compositions 
- #       install-crossplane-compositions
+        install-crossplane-compositions
     }
  
     install-crossplane-compositions() {
         kubectl config use-context $VIEW_CLUSTER_NAME
         ytt -f crossplane/definition-ytt.yaml -v shared_domain=$DOMAIN -v region=$AWS_REGION -v registryHost=$PRIVATE_REPO_SERVER | kubectl apply -f-
-        kubectl apply -f crossplane/provider-config.yaml
-        kubectl apply -f crossplane/service-providers.yaml       
         ytt -f crossplane/static-values.yaml -f crossplane/xp-eks-composition-ytt.yaml  | kubectl apply -f-
     }
     
@@ -232,7 +229,7 @@
 
     uninstall-tap() {
 
-        tanzu package installed delete tap -n tap-install
+        tanzu package installed delete tap -n tap-install -y
 
     }
 
@@ -340,18 +337,23 @@
         helm repo add crossplane-stable https://charts.crossplane.io/stable
         helm repo update
 
-        helm install crossplane --namespace crossplane-system crossplane-stable/crossplane \
-        --set 'args={--enable-external-secret-stores}'
+        helm upgrade crossplane --namespace crossplane-system crossplane-stable/crossplane --version 1.11.3 -i \
+        --set 'args={--debug,--enable-composition-functions,--enable-environment-configs}' \
+        --set 'xfn.enabled=true' \
+        --set 'xfn.args={--debug}'
 
         sleep 30
 
-        kubectl apply -f .config/data-services/rds-postgres/crossplane-aws-provider.yaml
 
         AWS_PROFILE=default && echo -e "[default]\naws_access_key_id = $(aws configure get aws_access_key_id --profile $AWS_PROFILE)\naws_secret_access_key = $(aws configure get aws_secret_access_key --profile $AWS_PROFILE)\naws_session_token = $(aws configure get aws_session_token --profile $AWS_PROFILE)" > .config/creds.conf
 
         kubectl create secret generic aws-provider-creds -n crossplane-system --from-file=creds=.config/creds.conf
-
         rm -f .config/creds.conf
+        kubectl apply -f crossplane/provider-config.yaml
+        kubectl apply -f crossplane/service-providers.yaml       
+
+        SA=$(kubectl -n crossplane-system get sa -o name | grep provider-kubernetes | sed -e 's|serviceaccount\/|crossplane-system:|g')
+        kubectl create clusterrolebinding provider-kubernetes-admin-binding --clusterrole cluster-admin --serviceaccount="${SA}"
 
     }
     
@@ -440,12 +442,12 @@
         #configure GUI on view cluster to access stage cluster
         kubectl config use-context $STAGE_CLUSTER_NAME
         kubectl apply -f .config/cluster-configs/reader-accounts.yaml
+        kubectl apply -f .config/cluster-configs/tap-gui-secret.yaml
         export stageClusterUrl=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')
         export stageClusterName=$STAGE_CLUSTER_NAME
-        export stageClusterToken=$(kubectl -n tap-gui get secret $(kubectl -n tap-gui get sa tap-gui-viewer -o=json \
-        | jq -r '.secrets[0].name') -o=json \
-        | jq -r '.data["token"]' \
-        | base64 --decode)
+        export stageClusterToken=$(kubectl -n tap-gui get secret tap-gui-viewer -o=json \
+            | jq -r '.data["token"]' \
+            | base64 --decode)
         yq '.tap_gui.app_config.kubernetes.clusterLocatorMethods.[0].clusters.[1].url = env(stageClusterUrl)' .config/tap-profiles/tap-view.yaml -i
         yq '.tap_gui.app_config.kubernetes.clusterLocatorMethods.[0].clusters.[1].name = env(stageClusterName)' .config/tap-profiles/tap-view.yaml -i
         yq '.tap_gui.app_config.kubernetes.clusterLocatorMethods.[0].clusters.[1].serviceAccountToken = env(stageClusterToken)' .config/tap-profiles/tap-view.yaml -i
@@ -454,12 +456,12 @@
         #configure GUI on view cluster to access prod cluster
         kubectl config use-context $PROD_CLUSTER_NAME
         kubectl apply -f .config/cluster-configs/reader-accounts.yaml
+        kubectl apply -f .config/cluster-configs/tap-gui-secret.yaml
         export prodClusterUrl=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')
         export prodClusterName=$PROD_CLUSTER_NAME
-        export prodClusterToken=$(kubectl -n tap-gui get secret $(kubectl -n tap-gui get sa tap-gui-viewer -o=json \
-        | jq -r '.secrets[0].name') -o=json \
-        | jq -r '.data["token"]' \
-        | base64 --decode)
+        export prodClusterToken=$(kubectl -n tap-gui get secret tap-gui-viewer -o=json \
+            | jq -r '.data["token"]' \
+            | base64 --decode)
         yq '.tap_gui.app_config.kubernetes.clusterLocatorMethods.[0].clusters.[2].url = env(prodClusterUrl)' .config/tap-profiles/tap-view.yaml -i
         yq '.tap_gui.app_config.kubernetes.clusterLocatorMethods.[0].clusters.[2].name = env(prodClusterName)' .config/tap-profiles/tap-view.yaml -i
         yq '.tap_gui.app_config.kubernetes.clusterLocatorMethods.[0].clusters.[2].serviceAccountToken = env(prodClusterToken)' .config/tap-profiles/tap-view.yaml -i
@@ -592,39 +594,39 @@
 
 case $1 in
 create-clusters)
-   #  scripts/k8s-handler.sh create $VIEW_CLUSTER_PROVIDER $VIEW_CLUSTER_NAME $VIEW_CLUSTER_NODES \
-#     scripts/k8s-handler.sh create $DEV_CLUSTER_PROVIDER $DEV_CLUSTER_NAME $DEV_CLUSTER_NODES \
-#    & scripts/k8s-handler.sh create $STAGE_CLUSTER_PROVIDER $STAGE_CLUSTER_NAME $STAGE_CLUSTER_NODES \
-     scripts/k8s-handler.sh create $PROD_CLUSTER_PROVIDER $PROD_CLUSTER_NAME $PROD_CLUSTER_NODES   
+     scripts/k8s-handler.sh create $VIEW_CLUSTER_PROVIDER $VIEW_CLUSTER_NAME $VIEW_CLUSTER_NODES \
+    &  scripts/k8s-handler.sh create $DEV_CLUSTER_PROVIDER $DEV_CLUSTER_NAME $DEV_CLUSTER_NODES \
+    & scripts/k8s-handler.sh create $STAGE_CLUSTER_PROVIDER $STAGE_CLUSTER_NAME $STAGE_CLUSTER_NODES \
+    &  scripts/k8s-handler.sh create $PROD_CLUSTER_PROVIDER $PROD_CLUSTER_NAME $PROD_CLUSTER_NODES   
 #    & scripts/k8s-handler.sh create $BROWNFIELD_CLUSTER_PROVIDER $BROWNFIELD_CLUSTER_NAME $BROWNFIELD_CLUSTER_NODES  
     ;;
 install-demo)
    #set k8s contexts and verify cluster install
-#    scripts/k8s-handler.sh init $VIEW_CLUSTER_PROVIDER $VIEW_CLUSTER_NAME
+    scripts/k8s-handler.sh init $VIEW_CLUSTER_PROVIDER $VIEW_CLUSTER_NAME
     scripts/k8s-handler.sh init $DEV_CLUSTER_PROVIDER $DEV_CLUSTER_NAME
     scripts/k8s-handler.sh init $STAGE_CLUSTER_PROVIDER $STAGE_CLUSTER_NAME
     scripts/k8s-handler.sh init $PROD_CLUSTER_PROVIDER $PROD_CLUSTER_NAME
 #    scripts/k8s-handler.sh init $BROWNFIELD_CLUSTER_PROVIDER $BROWNFIELD_CLUSTER_NAME
    #install all demo components
     install-view-cluster
-   install-dev-cluster
+  install-dev-cluster
     install-stage-cluster
    install-prod-cluster
     update-multi-cluster-access
 #    add-brownfield-apis
-#    attach-tmc-clusters 
+  #  attach-tmc-clusters 
     ;;
 delete-all)
     scripts/dektecho.sh prompt  "Are you sure you want to delete all clusters?" && [ $? -eq 0 ] || exit
     ./demo.sh reset
-   delete-tmc-clusters
+#   delete-tmc-clusters
     uninstall-view-cluster
    uninstall-dev-cluster
     uninstall-stage-cluster
    uninstall-prod-cluster
 
-   #   scripts/k8s-handler.sh delete $VIEW_CLUSTER_PROVIDER $VIEW_CLUSTER_NAME \
-      scripts/k8s-handler.sh delete $DEV_CLUSTER_PROVIDER $DEV_CLUSTER_NAME \
+   scripts/k8s-handler.sh delete $VIEW_CLUSTER_PROVIDER $VIEW_CLUSTER_NAME 
+    & scripts/k8s-handler.sh delete $DEV_CLUSTER_PROVIDER $DEV_CLUSTER_NAME \
     & scripts/k8s-handler.sh delete $STAGE_CLUSTER_PROVIDER $STAGE_CLUSTER_NAME \
     & scripts/k8s-handler.sh delete $PROD_CLUSTER_PROVIDER $PROD_CLUSTER_NAME  
 #    & scripts/k8s-handler.sh delete $BROWNFIELD_CLUSTER_PROVIDER $BROWNFIELD_CLUSTER_NAME

@@ -1,12 +1,12 @@
 apiVersion: xp.tanzu.vmware.com/v1alpha1
 kind: ManagedCluster
 metadata:
-  name: stu-testeks6
+  name: stu-testeks8
   namespace: managed
   labels:
     owner: stu
 spec:
-  id: stu-testeks6
+  id: stu-testeks8
   compositionSelector:
     matchLabels:
       cluster: eks
@@ -17,6 +17,6 @@ spec:
     nodeSize: large ### Supported values: small, medium, large
     nodeCount: 5
     region: use1
-    subDomain: cluster1
+    subDomain: cluster2
   writeConnectionSecretToRef:
-    name: stu-testeks6
+    name: stu-testeks8

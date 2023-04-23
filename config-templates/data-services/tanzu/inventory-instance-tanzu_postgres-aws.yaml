@@ -1,0 +1,14 @@
+apiVersion: sql.tanzu.vmware.com/v1
+kind: Postgres
+metadata:
+  name: inventory-db
+spec:
+  imagePullSecret: 
+    name: registry-credentials 
+  memory: 800Mi
+  cpu: "0.8"
+  storageClassName: gp2
+  storageSize: 800M
+  serviceType: LoadBalancer
+  highAvailability:
+    enabled: false

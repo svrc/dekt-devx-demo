@@ -144,7 +144,9 @@
         #kubectl apply -f ../$GITOPS_STAGE_REPO/config/$STAGEPROD_NAMESPACE/$ANALYZER_WORKLOAD -n $STAGEPROD_NAMESPACE
         #kubectl apply -f ../$GITOPS_STAGE_REPO/config/$STAGEPROD_NAMESPACE/$PORTAL_WORKLOAD -n $STAGEPROD_NAMESPACE
         # kubectl apply -f ../$GITOPS_STAGE_REPO/config/$STAGEPROD_NAMESPACE/$SENSORS_WORKLOAD -n $STAGEPROD_NAMESPACE
-        kubectl apply -f ./*-deliverable.yaml -n $STAGEPROD_NAMESPACE
+        kubectl apply -f ./$ANALYZER_WORKLOAD-deliverable.yaml -n $STAGEPROD_NAMESPACE
+        kubectl apply -f ./$PORTAL_WORKLOAD-deliverable.yaml -n $STAGEPROD_NAMESPACE
+        kubectl apply -f ./$SENSORS_WORKLOAD-deliverable.yaml -n $STAGEPROD_NAMESPACE
 
         scripts/dektecho.sh status "Your DevX-Mood application is being deployed to production"
 
@@ -198,8 +200,6 @@
 
         kubectl apply -f .config/data-services/rds-postgres/instance-class.yaml
 
-        kubectl apply -f .config/data-services/rds-postgres/rds-secret.yaml -n $appNamespace 
-        
         kubectl apply -f .config/data-services/rds-postgres/inventory-db-rds-instance.yaml -n $appNamespace
 
         tanzu service resource-claim create postgres-claim \
@@ -304,9 +304,9 @@
         kubectl delete -f .config/data-services/tanzu/reading-instance-tanzu_rabbitmq.yaml -n $STAGEPROD_NAMESPACE
 
         kubectl config use-context $PROD_CLUSTER
-        kubectl delete -f ../$GITOPS_STAGE_REPO/config/$STAGEPROD_NAMESPACE/$ANALYZER_WORKLOAD -n $STAGEPROD_NAMESPACE
-        kubectl delete -f ../$GITOPS_STAGE_REPO/config/$STAGEPROD_NAMESPACE/$PORTAL_WORKLOAD -n $STAGEPROD_NAMESPACE
-        kubectl delete -f ../$GITOPS_STAGE_REPO/config/$STAGEPROD_NAMESPACE/$SENSORS_WORKLOAD -n $STAGEPROD_NAMESPACE
+        kubectl delete -f ./$ANALYZER_WORKLOAD-deliverable.yaml -n $STAGEPROD_NAMESPACE
+        kubectl delete -f ./$PORTAL_WORKLOAD-deliverable.yaml -n $STAGEPROD_NAMESPACE
+        kubectl delete -f ./$SENSORS_WORKLOAD-deliverable.yaml -n $STAGEPROD_NAMESPACE
         tanzu service resource-claim delete postgres-claim -y -n $STAGEPROD_NAMESPACE
         tanzu service resource-claim delete rabbitmq-claim -y -n $STAGEPROD_NAMESPACE
         kubectl delete -f .config/data-services/rds-postgres/inventory-db-rds-instance.yaml -n $STAGEPROD_NAMESPACE
@@ -393,8 +393,11 @@ team)
     ;;
 stage)
     create-workloads $STAGE_CLUSTER $STAGEPROD_NAMESPACE $SNIFF_THRESHOLD_MILD $RUN_SUB_DOMAIN
-    provision-rabbitmq $STAGEPROD_NAMESPACE 2
-    provision-rds-postgres $STAGEPROD_NAMESPACE
+    kubectl get cm $ANALYZER_WORKLOAD-deliverable -n $STAGEPROD_NAMESPACE -o jsonpath="{.data.deliverable}" > ./$ANALYZER_WORKLOAD-deliverable.yaml
+    kubectl get cm $PORTAL_WORKLOAD-deliverable -n $STAGEPROD_NAMESPACE -o jsonpath="{.data.deliverable}" > ./$PORTAL_WORKLOAD-deliverable.yaml
+    kubectl get cm $SENSORS_WORKLOAD-deliverable -n $STAGEPROD_NAMESPACE -o jsonpath="{.data.deliverable}" > ./$SENSORS_WORKLOAD-deliverable.yaml
+    #provision-rabbitmq $STAGEPROD_NAMESPACE 2
+    #provision-rds-postgres $STAGEPROD_NAMESPACE
     ;;
 prod)
     prod-roleout

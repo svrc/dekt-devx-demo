@@ -298,6 +298,12 @@ delete-eks-cluster () {
 	scripts/dektecho.sh status "Starting deleting resources of EKS cluster $cluster_name ..."
 
 	eksctl delete cluster --name $cluster_name --force
+        aws iam delete-role-policy --role-name ${cluster_name}-workload --policy-name tapWorkload
+        aws iam delete-role-policy --role-name ${cluster_name}-build-service --policy-name tapBuildServicePolicy
+ 
+        aws iam delete-role --role-name ${cluster_name}-build-service 
+        aws iam delete-role --role-name ${cluster_name}-workload
+
 }
 
 #create-gke-cluster
