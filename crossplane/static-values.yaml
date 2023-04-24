@@ -1,0 +1,382 @@
+#@data/values
+---
+tap:
+  version: 1.4.2
+  profile: |
+    profile: run
+    shared:
+      ingress_domain: "%s.%s"
+      ingress_issuer: tap-ingress-selfsigned
+    cnrs:
+      domain_template: '{{.Name}}.{{.Domain}}'
+    contour:
+      envoy:
+        service:
+          type: LoadBalancer
+    appliveview_connector:
+      backend:
+        host: "appliveview.%s.%s"
+        ingressEnabled: true
+        sslDeactivated: true
+    ceip_policy_disclosed: true
+   
+      
+         
+aws:
+  regionMap:
+    #! Standard AZs: a-c; Fargate Support
+    use1: us-east-1       #! a-f
+    use2: us-east-2
+    usw1: us-west-1       #! bc
+    usw2: us-west-2       #! a-d
+    cac: ca-central-1     #! abd, FG: ab
+    sae: sa-east-1
+    afs: af-south-1       #! default: disabled
+    euc: eu-central-1
+    euw1: eu-west-1
+    euw2: eu-west-2
+    euw3: eu-west-3
+    eus: eu-south-1       #! default: disabled
+    eun: eu-north-1
+    ape: ap-east-1        #! default: disabled
+    aps1: ap-south-1
+    apne1: ap-northeast-1 #! acd
+    apne2: ap-northeast-2 #! a-d
+    apne3: ap-northeast-3
+    apse1: ap-southeast-1
+    apse2: ap-southeast-2
+    apse3: ap-southeast-3 #! default: disabled
+    
+  zoneMap:
+    z1:
+      use1: us-east-1a
+      use2: us-east-2a
+      usw1: us-west-1b
+      usw2: us-west-2a
+      cac: ca-central-1a
+      sae: sa-east-1a
+      afs: af-south-1a
+      euc: eu-central-1a
+      euw1: eu-west-1a
+      euw2: eu-west-2a
+      euw3: eu-west-3a
+      eus: eu-south-1a
+      eun: eu-north-1a
+      ape: ap-east-1a
+      aps1: ap-south-1a
+      apne1: ap-northeast-1a
+      apne2: ap-northeast-2a
+      apne3: ap-northeast-3a
+      apse1: ap-southeast-1a
+      apse2: ap-southeast-2a
+      apse3: ap-southeast-3a
+    z2:
+      use1: us-east-1b
+      use2: us-east-2b
+      usw1: us-west-1c       #! No a zone
+      usw2: us-west-2b
+      cac: ca-central-1b
+      sae: sa-east-1b
+      afs: af-south-1b
+      euc: eu-central-1b
+      euw1: eu-west-1b
+      euw2: eu-west-2b
+      euw3: eu-west-3b
+      eus: eu-south-1b
+      eun: eu-north-1b
+      ape: ap-east-1b
+      aps1: ap-south-1b
+      apne1: ap-northeast-1d #! No b zone
+      apne2: ap-northeast-2b
+      apne3: ap-northeast-3b
+      apse1: ap-southeast-1b
+      apse2: ap-southeast-2b
+      apse3: ap-southeast-3b
+    z3:
+      use1: us-east-1c
+      use2: us-east-2c
+      usw1: us-west-1c
+      usw2: us-west-2c
+      cac: ca-central-1b #! No c zone; d zone not support FG
+      sae: sa-east-1c
+      afs: af-south-1c
+      euc: eu-central-1c
+      euw1: eu-west-1c
+      euw2: eu-west-2c
+      euw3: eu-west-3c
+      eus: eu-south-1c
+      eun: eu-north-1c
+      ape: ap-east-1c
+      aps1: ap-south-1c
+      apne1: ap-northeast-1c
+      apne2: ap-northeast-2c
+      apne3: ap-northeast-3c
+      apse1: ap-southeast-1c
+      apse2: ap-southeast-2c
+      apse3: ap-southeast-3c
+      
+  nodeGroup:
+    maxSize: 10
+    
+  nodeSizes:
+    small: t3.small
+    medium: t3.medium
+    large: t3.large
+  vpcBlock: 10.0.0.0/16
+  securityGroupEgressRange: "0.0.0.0/0"
+  subnets:
+    public:
+    - cidrBlock: 10.0.0.0/24
+    - cidrBlock: 10.0.1.0/24
+    - cidrBlock: 10.0.2.0/24
+
+    private:
+    - cidrBlock: 10.0.100.0/24
+    - cidrBlock: 10.0.101.0/24
+    - cidrBlock: 10.0.102.0/24
+  
+  roles:
+    controlplane:
+        assumeRolePolicyDocument: |
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {
+                        "Service": [
+                            "eks.amazonaws.com"
+                        ]
+                    },
+                    "Action": [
+                        "sts:AssumeRole"
+                    ]
+                }
+            ]
+          }
+    nodegroup:
+        assumeRolePolicyDocument: |
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {
+                        "Service": [
+                            "ec2.amazonaws.com"
+                        ]
+                    },
+                    "Action": [
+                        "sts:AssumeRole"
+                    ]
+                }
+            ]
+          }
+    fargateprofile:
+        assumeRolePolicyDocument: |
+          {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Principal": {
+                            "Service": [
+                                "eks-fargate-pods.amazonaws.com"
+                            ]
+                        },
+                        "Action": [
+                            "sts:AssumeRole"
+                        ]
+                    }
+                ]
+          }
+          
+  oidcroles:   #! template assumes accountID, oidcIssuerID x3   
+    csi: 
+      templateFields:
+      - status.accountID
+      - status.oidcIssuerID
+      - status.oidcIssuerID
+      - status.oidcIssuerID  
+      rolePolicyTemplate: |
+        {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {
+                        "Federated": "arn:aws:iam::%s:oidc-provider/%s"
+                    },
+                    "Action": "sts:AssumeRoleWithWebIdentity",
+                    "Condition": {
+                        "StringEquals": {
+                            "%s:aud": "sts.amazonaws.com",
+                            "%s:sub": "system:serviceaccount:kube-system:ebs-csi-controller-sa"
+                        }
+                    }
+                }
+            ]
+           }
+           
+    cluster-essentials: 
+      templateFields:
+      - status.accountID
+      - status.oidcIssuerID
+      - status.oidcIssuerID
+      - status.oidcIssuerID  
+      rolePolicyTemplate: |
+        {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": {
+                    "Federated": "arn:aws:iam::%s:oidc-provider/%s"
+                },
+                "Action": "sts:AssumeRoleWithWebIdentity",
+                "Condition": {
+                    "StringEquals": {
+                        "%s:aud": "sts.amazonaws.com",
+                        "%s:sub": "system:serviceaccount:cluster-essentials:default"
+                    }
+                }
+             }
+           ]
+        }        
+    workload:
+      templateFields:
+      - status.accountID
+      - status.oidcIssuerID
+      - status.oidcIssuerID
+      - status.oidcIssuerID      
+      rolePolicyTemplate: |
+        {
+          "Version": "2012-10-17",
+          "Statement": [
+              {
+                  "Effect": "Allow",
+                  "Principal": {
+                      "Federated": "arn:aws:iam::%s:oidc-provider/%s"
+                  },
+                  "Action": "sts:AssumeRoleWithWebIdentity",
+                  "Condition": {
+                      "StringEquals": {
+                          "%s:sub": [ "system:serviceaccount:dev:default",
+                                      "system:serviceaccount:team:default",
+                                      "system:serviceaccount:application:default"],
+                          "%s:aud": "sts.amazonaws.com"
+                      }
+                  }
+              }
+          ]
+        }
+  policies:
+    tanzuappworkload:
+      templateFields:
+      - spec.parameters.registryRegion
+      - status.accountID
+      - spec.parameters.registryRegion
+      - status.accountID
+      
+      documentTemplate: |  
+        {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Action": [
+                        "ecr:DescribeRegistry",
+                        "ecr:GetAuthorizationToken",
+                        "ecr:GetRegistryPolicy",
+                        "ecr:PutRegistryPolicy",
+                        "ecr:PutReplicationConfiguration",
+                        "ecr:DeleteRegistryPolicy"
+                    ],
+                    "Resource": "*",
+                    "Effect": "Allow",
+                    "Sid": "TAPEcrWorkloadGlobal"
+                },
+                {
+                    "Action": [
+                        "ecr:DescribeImages",
+                        "ecr:ListImages",
+                        "ecr:BatchCheckLayerAvailability",
+                        "ecr:BatchGetImage",
+                        "ecr:BatchGetRepositoryScanningConfiguration",
+                        "ecr:DescribeImageReplicationStatus",
+                        "ecr:DescribeImageScanFindings",
+                        "ecr:DescribeRepositories",
+                        "ecr:GetDownloadUrlForLayer",
+                        "ecr:GetLifecyclePolicy",
+                        "ecr:GetLifecyclePolicyPreview",
+                        "ecr:GetRegistryScanningConfiguration",
+                        "ecr:GetRepositoryPolicy",
+                        "ecr:ListTagsForResource",
+                        "ecr:TagResource",
+                        "ecr:UntagResource",
+                        "ecr:BatchDeleteImage",
+                        "ecr:BatchImportUpstreamImage",
+                        "ecr:CompleteLayerUpload",
+                        "ecr:CreatePullThroughCacheRule",
+                        "ecr:CreateRepository",
+                        "ecr:DeleteLifecyclePolicy",
+                        "ecr:DeletePullThroughCacheRule",
+                        "ecr:DeleteRepository",
+                        "ecr:InitiateLayerUpload",
+                        "ecr:PutImage",
+                        "ecr:PutImageScanningConfiguration",
+                        "ecr:PutImageTagMutability",
+                        "ecr:PutLifecyclePolicy",
+                        "ecr:PutRegistryScanningConfiguration",
+                        "ecr:ReplicateImage",
+                        "ecr:StartImageScan",
+                        "ecr:StartLifecyclePolicyPreview",
+                        "ecr:UploadLayerPart",
+                        "ecr:DeleteRepositoryPolicy",
+                        "ecr:SetRepositoryPolicy"
+                    ],
+                    "Resource": [
+                        "arn:aws:ecr:%s:%s:repository/tap-build-service",
+                        "arn:aws:ecr:%s:%s:repository/tap-apps/*"
+                    ],
+                    "Effect": "Allow",
+                    "Sid": "TAPEcrWorkloadScoped"
+                }
+              ]
+             }   
+  iamAttachments:
+    controlplane:
+      policyArn: arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
+      roleSelector: controlplane
+    service:
+      policyArn: arn:aws:iam::aws:policy/AmazonEKSServicePolicy
+      roleSelector: controlplane
+    csi:
+      policyArn: arn:aws:iam::aws:policy/AmazonEBSCSIDriverPolicy
+      roleSelector: controlplane            
+    worker:
+      policyArn: arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+      roleSelector: nodegroup
+    cni:
+      policyArn: arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+      roleSelector: nodegroup
+    registry:
+      policyArn: arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+      roleSelector: nodegroup
+    ssm:
+      policyArn: arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      roleSelector: nodegroup    
+    cluster-essentials:
+      policyArn: arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+      roleSelector: cluster-essentials
+    fargate:
+      policyArn: arn:aws:iam::aws:policy/AmazonEKSFargatePodExecutionRolePolicy
+      roleSelector: fargateprofile
+  iamCustomAttachments:
+    workload:
+      policyArnTemplate: "arn:aws:iam::%s:policy/%s-tanzuappworkload"
+      templateFields:
+      - status.accountID
+      - spec.id
+      roleSelector: workload
+      
+      
